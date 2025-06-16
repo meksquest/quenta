@@ -1,11 +1,7 @@
 defmodule Quenta.ExpenseItemsTest do
-  use ExUnit.Case, async: true
+  use Quenta.DataCase, async: true
   alias Quenta.Expenses
   alias Quenta.ExpenseItems
-
-  setup do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Quenta.Repo)
-  end
 
   test "create_expense_item/1 creates a new expense item" do
     {:ok, expense} =

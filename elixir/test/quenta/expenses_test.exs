@@ -1,10 +1,6 @@
 defmodule Quenta.ExpensesTest do
-  use ExUnit.Case, async: true
+  use Quenta.DataCase, async: true
   alias Quenta.Expenses
-
-  setup do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Quenta.Repo)
-  end
 
   test "change_expense/2 returns a changeset for an existing expense" do
     expense = %Quenta.Expenses.Expense{
