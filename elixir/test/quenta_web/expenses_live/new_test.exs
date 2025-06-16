@@ -3,8 +3,14 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
 
   import Phoenix.LiveViewTest
 
-  test "renders new expense form", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/expenses/new")
+  alias Quenta.Users
+
+  setup do
+    %{george: Users.get_user!(1)}
+  end
+
+  test "renders new expense form", %{conn: conn, george: george} do
+    {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
 
     assert render(view) =~ "Description"
     assert render(view) =~ "Amount"
@@ -12,8 +18,8 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
     assert render(view) =~ "Paid By"
   end
 
-  test "creates a new expense", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/expenses/new")
+  test "creates a new expense", %{conn: conn, george: george} do
+    {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
 
     view
     |> element("form")
@@ -26,11 +32,11 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
       }
     })
 
-    assert_redirected(view, ~p"/expenses")
+    assert_redirected(view, ~p"/users/#{george}")
   end
 
-  test "displays validation errors", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/expenses/new")
+  test "displays validation errors", %{conn: conn, george: george} do
+    {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
 
     view
     |> element("form")
@@ -46,8 +52,8 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
     assert render(view) =~ "can&#39;t be blank"
   end
 
-  test "creates a new expense with expense items", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/expenses/new")
+  test "creates a new expense with expense items", %{conn: conn, george: george} do
+    {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
 
     view
     |> element("form")
@@ -72,11 +78,11 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
       }
     })
 
-    assert_redirected(view, ~p"/expenses")
+    assert_redirected(view, ~p"/users/#{george}")
   end
 
-  test "displays validation errors for expense items", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/expenses/new")
+  test "displays validation errors for expense items", %{conn: conn, george: george} do
+    {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
 
     view
     |> element("form")
