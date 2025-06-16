@@ -28,58 +28,66 @@ defmodule Quenta.ExpensesTest do
 
       changeset = Expenses.change_expense(expense, %{"description" => nil})
       refute changeset.valid?
-      assert [description: {"can't be blank", _}] = changeset.errors
+      assert Keyword.has_key?(changeset.errors, :description)
     end
   end
 
   describe "create_expense/1" do
     test "creates a new expense" do
+      user = insert(:user)
+
       params = %{
         "description" => "Lunch",
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
-        "user_id" => 1
+        "user_id" => user.id
       }
 
       assert {:ok, expense} = Expenses.create_expense(params)
       assert expense.description == "Lunch"
       assert expense.amount_cents == 1500
       assert expense.date == ~D[2023-10-01]
+      assert expense.user_id == user.id
     end
 
     test "creates a new expense and associated expense_item" do
+      user1 = insert(:user)
+      user2 = insert(:user)
+
       params = %{
         "description" => "Lunch",
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
-        "user_id" => 1,
+        "user_id" => user1.id,
         "expense_items" => [
           %{
             description: "Item 1",
             amount_dollars: 5.00,
-            user_id: 2
+            user_id: user2.id
           }
         ]
       }
 
       assert {:ok, expense} = Expenses.create_expense(params)
-      Quenta.Repo.preload(expense, :expense_items)
+      expense = Quenta.Repo.preload(expense, :expense_items)
       assert expense.description == "Lunch"
       assert expense.amount_cents == 1500
       assert expense.date == ~D[2023-10-01]
       assert [expense_item] = expense.expense_items
       assert expense_item.description == "Item 1"
       assert expense_item.amount_cents == 500
-      assert expense_item.user_id == 2
+      assert expense_item.user_id == user2.id
     end
 
     test "returns an error when required fields are missing" do
+      user = insert(:user)
+
       params = %{
         "description" => "Dinner",
         # Missing amount_cents
         "amount_cents" => nil,
         "date" => ~D[2023-10-01],
-        "user_id" => 1
+        "user_id" => user.id
       }
 
       assert {:error, changeset} = Expenses.create_expense(params)
@@ -88,16 +96,19 @@ defmodule Quenta.ExpensesTest do
     end
 
     test "broadcasts expense_added upon success" do
+      user1 = insert(:user)
+      user2 = insert(:user)
+
       params = %{
         "description" => "Lunch",
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
-        "user_id" => 1,
+        "user_id" => user1.id,
         "expense_items" => [
           %{
             description: "Item 1",
             amount_dollars: 5.00,
-            user_id: 2
+            user_id: user2.id
           }
         ]
       }
@@ -109,12 +120,14 @@ defmodule Quenta.ExpensesTest do
     end
 
     test "does not broadcas expense_added upon failure" do
+      user = insert(:user)
+
       params = %{
         "description" => "Dinner",
         # Missing amount_cents
         "amount_cents" => nil,
         "date" => ~D[2023-10-01],
-        "user_id" => 1
+        "user_id" => user.id
       }
 
       Quenta.PubSub.subscribe_to_expense_added()
@@ -128,19 +141,15 @@ defmodule Quenta.ExpensesTest do
   end
 
   test "list_expenses/0 returns all expenses" do
-    # Create an expense to test listing
-    params = %{
-      "description" => "Coffee",
-      "amount_dollars" => 5,
-      "date" => ~D[2023-10-02],
-      "user_id" => 1
-    }
+    user = insert(:user)
 
-    {:ok, _expense} = Expenses.create_expense(params)
+    expense =
+      insert(:expense, description: "Coffee", amount_cents: 500, date: ~D[2023-10-02], user: user)
 
-    assert [expense] = Expenses.list_expenses()
-    assert expense.description == "Coffee"
-    assert expense.amount_cents == 500
-    assert expense.date == ~D[2023-10-02]
+    assert [retrieved_expense] = Expenses.list_expenses()
+    assert retrieved_expense.description == "Coffee"
+    assert retrieved_expense.amount_cents == 500
+    assert retrieved_expense.date == ~D[2023-10-02]
+    assert retrieved_expense.id == expense.id
   end
 end

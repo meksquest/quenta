@@ -28,6 +28,7 @@ defmodule QuentaWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import QuentaWeb.ConnCase
+      import Quenta.Factory
     end
   end
 

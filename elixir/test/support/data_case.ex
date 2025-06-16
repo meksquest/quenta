@@ -24,6 +24,7 @@ defmodule Quenta.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import Quenta.DataCase
+      import Quenta.Factory
     end
   end
 

@@ -3,9 +3,8 @@ defmodule QuentaWeb.UserLiveTest do
 
   import Phoenix.LiveViewTest
 
-  alias Quenta.Users
-  alias Quenta.Expenses
   alias Quenta.PubSub
+  alias Quenta.Users
 
   setup do
     george = Users.get_user!(1)
@@ -48,14 +47,13 @@ defmodule QuentaWeb.UserLiveTest do
 
     test "displays expenses with correct information", %{conn: conn, george: george, meks: meks} do
       # Create an expense paid by George
-      params = %{
-        "description" => "Coffee Shop",
-        "amount_dollars" => 10.50,
-        "date" => ~D[2023-10-02],
-        "user_id" => george.id
-      }
-
-      {:ok, expense} = Expenses.create_expense(params)
+      expense =
+        insert(:expense,
+          description: "Coffee Shop",
+          amount_cents: 1050,
+          date: ~D[2023-10-02],
+          user: george
+        )
 
       {:ok, view, html} = live(conn, ~p"/users/#{meks.id}")
 
@@ -79,14 +77,12 @@ defmodule QuentaWeb.UserLiveTest do
       meks: meks
     } do
       # George pays $20, so Meks owes George $10
-      params = %{
-        "description" => "Dinner",
-        "amount_dollars" => 20.00,
-        "date" => ~D[2023-10-02],
-        "user_id" => george.id
-      }
-
-      {:ok, _expense} = Expenses.create_expense(params)
+      insert(:expense,
+        description: "Dinner",
+        amount_cents: 2000,
+        date: ~D[2023-10-02],
+        user: george
+      )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 
@@ -97,14 +93,12 @@ defmodule QuentaWeb.UserLiveTest do
 
     test "displays correct balance when user is owed money", %{conn: conn, meks: meks} do
       # Meks pays $30, so George owes Meks $15
-      params = %{
-        "description" => "Groceries",
-        "amount_dollars" => 30.00,
-        "date" => ~D[2023-10-02],
-        "user_id" => meks.id
-      }
-
-      {:ok, _expense} = Expenses.create_expense(params)
+      insert(:expense,
+        description: "Groceries",
+        amount_cents: 3000,
+        date: ~D[2023-10-02],
+        user: meks
+      )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 
@@ -119,22 +113,20 @@ defmodule QuentaWeb.UserLiveTest do
       meks: meks
     } do
       # George pays $20 (Meks owes $10)
-      {:ok, _expense1} =
-        Expenses.create_expense(%{
-          "description" => "Dinner",
-          "amount_dollars" => 20.00,
-          "date" => ~D[2023-10-01],
-          "user_id" => george.id
-        })
+      insert(:expense,
+        description: "Dinner",
+        amount_cents: 2000,
+        date: ~D[2023-10-01],
+        user: george
+      )
 
       # Meks pays $30 (George owes $15)
-      {:ok, _expense2} =
-        Expenses.create_expense(%{
-          "description" => "Groceries",
-          "amount_dollars" => 30.00,
-          "date" => ~D[2023-10-02],
-          "user_id" => meks.id
-        })
+      insert(:expense,
+        description: "Groceries",
+        amount_cents: 3000,
+        date: ~D[2023-10-02],
+        user: meks
+      )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 
@@ -144,25 +136,27 @@ defmodule QuentaWeb.UserLiveTest do
 
     test "displays expense items when present", %{conn: conn, george: george, meks: meks} do
       # Create expense with items
-      {:ok, _expense} =
-        Expenses.create_expense(%{
-          "description" => "Restaurant Bill",
-          "amount_dollars" => 50.00,
-          "date" => ~D[2023-10-02],
-          "user_id" => george.id,
-          "expense_items" => [
-            %{
-              "description" => "Pizza",
-              "amount_dollars" => 25.00,
-              "user_id" => george.id
-            },
-            %{
-              "description" => "Salad",
-              "amount_dollars" => 25.00,
-              "user_id" => meks.id
-            }
-          ]
-        })
+      expense =
+        insert(:expense,
+          description: "Restaurant Bill",
+          amount_cents: 5000,
+          date: ~D[2023-10-02],
+          user: george
+        )
+
+      insert(:expense_item,
+        description: "Pizza",
+        amount_cents: 2500,
+        user: george,
+        expense: expense
+      )
+
+      insert(:expense_item,
+        description: "Salad",
+        amount_cents: 2500,
+        user: meks,
+        expense: expense
+      )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 
@@ -189,13 +183,12 @@ defmodule QuentaWeb.UserLiveTest do
       ]
 
       for {description, _} <- expense_types do
-        {:ok, _expense} =
-          Expenses.create_expense(%{
-            "description" => description,
-            "amount_dollars" => 10.00,
-            "date" => ~D[2023-10-02],
-            "user_id" => george.id
-          })
+        insert(:expense,
+          description: description,
+          amount_cents: 1000,
+          date: ~D[2023-10-02],
+          user: george
+        )
       end
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
@@ -206,25 +199,27 @@ defmodule QuentaWeb.UserLiveTest do
     end
 
     test "displays even balance correctly", %{conn: conn, meks: meks} do
-      {:ok, _expense} =
-        Expenses.create_expense(%{
-          "description" => "Personal Bill",
-          "amount_dollars" => 20.00,
-          "date" => ~D[2023-10-02],
-          "user_id" => meks.id,
-          "expense_items" => [
-            %{
-              "description" => "Item 1",
-              "amount_dollars" => 10.00,
-              "user_id" => meks.id
-            },
-            %{
-              "description" => "Item 2",
-              "amount_dollars" => 10.00,
-              "user_id" => meks.id
-            }
-          ]
-        })
+      expense =
+        insert(:expense,
+          description: "Personal Bill",
+          amount_cents: 2000,
+          date: ~D[2023-10-02],
+          user: meks
+        )
+
+      insert(:expense_item,
+        description: "Item 1",
+        amount_cents: 1000,
+        user: meks,
+        expense: expense
+      )
+
+      insert(:expense_item,
+        description: "Item 2",
+        amount_cents: 1000,
+        user: meks,
+        expense: expense
+      )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 
@@ -244,14 +239,13 @@ defmodule QuentaWeb.UserLiveTest do
       assert html =~ "No expenses yet"
 
       # Create a new expense (this should trigger PubSub)
-      params = %{
-        "description" => "New Coffee",
-        "amount_dollars" => 5.00,
-        "date" => ~D[2023-10-02],
-        "user_id" => george.id
-      }
-
-      {:ok, expense} = Expenses.create_expense(params)
+      expense =
+        insert(:expense,
+          description: "New Coffee",
+          amount_cents: 500,
+          date: ~D[2023-10-02],
+          user: george
+        )
 
       # Manually trigger the PubSub message to simulate real behavior
       PubSub.broadcast_expense_added(expense)
@@ -272,13 +266,12 @@ defmodule QuentaWeb.UserLiveTest do
       meks: meks
     } do
       # Start with one expense
-      {:ok, _initial_expense} =
-        Expenses.create_expense(%{
-          "description" => "Initial Expense",
-          "amount_dollars" => 10.00,
-          "date" => ~D[2023-10-01],
-          "user_id" => george.id
-        })
+      insert(:expense,
+        description: "Initial Expense",
+        amount_cents: 1000,
+        date: ~D[2023-10-01],
+        user: george
+      )
 
       {:ok, view, html} = live(conn, ~p"/users/#{meks.id}")
 
@@ -286,34 +279,36 @@ defmodule QuentaWeb.UserLiveTest do
       assert html =~ "You owe George $5.00"
 
       # Add another expense
-      {:ok, _new_expense} =
-        Expenses.create_expense(%{
-          "description" => "Second Expense",
-          "amount_dollars" => 20.00,
-          "date" => ~D[2023-10-02],
-          "user_id" => george.id
-        })
+      expense =
+        insert(:expense,
+          description: "Second Expense",
+          amount_cents: 2000,
+          date: ~D[2023-10-02],
+          user: george
+        )
 
+      # Manually trigger the PubSub message to simulate real behavior
+      PubSub.broadcast_expense_added(expense)
       updated_html = render(view)
 
       # Running total should be updated ($5 + $10 = $15)
       assert updated_html =~ "You owe George $15.00"
     end
 
-    test "subscribes to expense_added on mount", %{conn: conn, meks: meks} do
+    test "subscribes to expense_added on mount", %{conn: conn, george: george, meks: meks} do
       # This test verifies that the LiveView subscribes to PubSub on mount
       # We can test this by checking that the process receives messages
 
       {:ok, view, _html} = live(conn, ~p"/users/#{meks.id}")
 
       # Create an expense and broadcast it
-      {:ok, expense} =
-        Expenses.create_expense(%{
-          "description" => "Test Expense",
-          "amount_dollars" => 15.00,
-          "date" => ~D[2023-10-02],
-          "user_id" => 1
-        })
+      expense =
+        insert(:expense,
+          description: "Test Expense",
+          amount_cents: 1500,
+          date: ~D[2023-10-02],
+          user: george
+        )
 
       # Broadcast the expense_added event
       PubSub.broadcast_expense_added(expense)
@@ -332,7 +327,7 @@ defmodule QuentaWeb.UserLiveTest do
       end
     end
 
-    test "handles malformed expense data gracefully", %{conn: conn, meks: meks} do
+    test "handles malformed expense data gracefully", %{conn: conn, george: george, meks: meks} do
       {:ok, view, _html} = live(conn, ~p"/users/#{meks.id}")
 
       # Create a mock expense with missing data and send via PubSub
@@ -341,7 +336,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: nil,
         amount_dollars: nil,
         date: nil,
-        user_id: 1
+        user_id: george.id
       }
 
       # This should not crash the LiveView
@@ -355,13 +350,12 @@ defmodule QuentaWeb.UserLiveTest do
 
   describe "UserLive helper functions" do
     test "formats dates correctly", %{conn: conn, george: george, meks: meks} do
-      {:ok, _expense} =
-        Expenses.create_expense(%{
-          "description" => "Date Test",
-          "amount_dollars" => 10.00,
-          "date" => ~D[2023-12-25],
-          "user_id" => george.id
-        })
+      insert(:expense,
+        description: "Date Test",
+        amount_cents: 1000,
+        date: ~D[2023-12-25],
+        user: george
+      )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 
@@ -369,13 +363,12 @@ defmodule QuentaWeb.UserLiveTest do
     end
 
     test "formats currency correctly", %{conn: conn, george: george, meks: meks} do
-      {:ok, _expense} =
-        Expenses.create_expense(%{
-          "description" => "Currency Test",
-          "amount_dollars" => 123.45,
-          "date" => ~D[2023-10-02],
-          "user_id" => george.id
-        })
+      insert(:expense,
+        description: "Currency Test",
+        amount_cents: 12345,
+        date: ~D[2023-10-02],
+        user: george
+      )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 

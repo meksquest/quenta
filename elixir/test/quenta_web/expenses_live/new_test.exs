@@ -27,7 +27,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
       expense: %{
         amount_dollars: "100.00",
         description: "Test Expense",
-        user_id: "1",
+        user_id: george.id,
         date: "2023-10-01"
       }
     })
@@ -53,6 +53,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
   end
 
   test "creates a new expense with expense items", %{conn: conn, george: george} do
+    meks = Users.get_user!(2)
     {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
 
     view
@@ -61,18 +62,18 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
       expense: %{
         amount_dollars: "100.00",
         description: "Test Expense",
-        user_id: "1",
+        user_id: george.id,
         date: "2023-10-01",
         expense_items: %{
           "0" => %{
             description: "Item 1",
             amount_dollars: "50.00",
-            user_id: "1"
+            user_id: george.id
           },
           "1" => %{
             description: "Item 2",
             amount_dollars: "30.00",
-            user_id: "2"
+            user_id: meks.id
           }
         }
       }
@@ -90,7 +91,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
       expense: %{
         amount_cents: "100.00",
         description: "Test Expense",
-        user_id: "1",
+        user_id: george.id,
         date: "2023-10-01",
         expense_items: %{
           "0" => %{
