@@ -5,9 +5,12 @@ defmodule QuentaWeb.UserLive do
 
   alias Quenta.ExpenseCalculator
   alias Quenta.Expenses
+  alias Quenta.PubSub
   alias Quenta.Users
 
+  @impl Phoenix.LiveView
   def mount(%{"user_id" => user_id}, _session, socket) do
+    PubSub.subscribe_to_expense_added()
     user = Users.get_user!(user_id)
     # Preload both user and expense_items with their associated users
     expenses = Expenses.list_expenses(preloads: [:user, expense_items: [:user]])
@@ -33,9 +36,32 @@ defmodule QuentaWeb.UserLive do
     {:ok, socket}
   end
 
+  @impl Phoenix.LiveView
   def handle_event("logout", _params, socket) do
     {:noreply, push_navigate(socket, to: ~p"/")}
   end
+
+  @impl Phoenix.LiveView
+  def handle_info({:expense_added, %Quenta.Expenses.Expense{} = expense}, socket) do
+    %{expenses: expenses, all_users: all_users, user: user} = socket.assigns
+    preloaded_expense = Quenta.Repo.preload(expense, [:user, :expense_items])
+    updated_expenses = [preloaded_expense | expenses]
+
+    expenses_with_balances =
+      calculate_expenses_with_balances(updated_expenses, all_users, user.id)
+
+    socket =
+      socket
+      |> assign(:expenses, expenses_with_balances)
+      |> assign(
+        :running_total_cents,
+        calculate_running_total_cents(expenses_with_balances, user.id)
+      )
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:expense_added, _}, socket), do: {:noreply, socket}
 
   defp calculate_expenses_with_balances(expenses, all_users, current_user_id) do
     Enum.map(expenses, fn expense ->
@@ -91,6 +117,7 @@ defmodule QuentaWeb.UserLive do
     end
   end
 
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
     <div class="min-h-screen bg-slate-900 text-white">
