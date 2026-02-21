@@ -177,16 +177,22 @@ defmodule QuentaWeb.UserLive do
     cond do
       expense.user_balance > 0 ->
         # Current user owes money
-        {"You owe", format_cents_to_dollars(expense.user_balance), "text-red-400"}
+        {"You owe", format_amount_with_currency(expense, expense.user_balance), "text-red-400"}
 
       expense.user_balance < 0 ->
         # Current user is owed money
-        {"You lent", format_cents_to_dollars(abs(expense.user_balance)), "text-green-400"}
+        {"You lent", format_amount_with_currency(expense, abs(expense.user_balance)),
+         "text-green-400"}
 
       true ->
         # Balanced
-        {"Even", "$0.00", "text-slate-400"}
+        {"Even", format_amount_with_currency(expense, 0), "text-slate-400"}
     end
+  end
+
+  defp format_amount_with_currency(expense, amount_cents) do
+    currency_code = expense.currency_code || "USD"
+    "#{currency_code} #{format_cents_to_dollars(amount_cents)}"
   end
 
   @impl Phoenix.LiveView
@@ -261,7 +267,9 @@ defmodule QuentaWeb.UserLive do
                           <%= for item <- expense.expense_items do %>
                             <div class="text-xs text-slate-400 flex justify-between">
                               <span>{item.description} ({item.user.name})</span>
-                              <span>{format_cents_to_dollars(item.amount_cents)}</span>
+                              <span>
+                                {format_amount_with_currency(expense, item.amount_cents)}
+                              </span>
                             </div>
                           <% end %>
                         </div>
@@ -270,7 +278,7 @@ defmodule QuentaWeb.UserLive do
                   </div>
                   <div class="text-right sm:flex-shrink-0">
                     <div class="font-semibold text-white">
-                      {format_cents_to_dollars(expense.amount_cents)}
+                      {format_amount_with_currency(expense, expense.amount_cents)}
                     </div>
                     <div class="text-sm text-slate-300 capitalize">
                       Paid by {expense.user.name}

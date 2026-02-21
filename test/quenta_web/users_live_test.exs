@@ -78,7 +78,7 @@ defmodule QuentaWeb.UserLiveTest do
 
       # Check expense details are displayed
       assert html =~ "Coffee Shop"
-      assert html =~ "$10.50"
+      assert html =~ "USD $10.50"
       assert html =~ "Oct 2, 2023"
       assert html =~ "Paid by George"
 
@@ -107,7 +107,7 @@ defmodule QuentaWeb.UserLiveTest do
 
       # Meks should owe George money
       assert html =~ "You owe George $10.00"
-      assert html =~ "You owe $10.00"
+      assert html =~ "You owe USD $10.00"
     end
 
     test "displays correct balance when user is owed money", %{conn: conn, meks: meks} do
@@ -123,7 +123,7 @@ defmodule QuentaWeb.UserLiveTest do
 
       # George should owe Meks money
       assert html =~ "George owes you $15.00"
-      assert html =~ "You lent $15.00"
+      assert html =~ "You lent USD $15.00"
     end
 
     test "displays running total correctly with multiple expenses", %{
@@ -182,7 +182,7 @@ defmodule QuentaWeb.UserLiveTest do
       # Check that expense items are displayed
       assert html =~ "Pizza (George)"
       assert html =~ "Salad (Meks)"
-      assert html =~ "$25.00"
+      assert html =~ "USD $25.00"
     end
 
     test "displays correct emoji for different expense types", %{
@@ -242,7 +242,7 @@ defmodule QuentaWeb.UserLiveTest do
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 
-      assert html =~ "Even $0.00"
+      assert html =~ "Even USD $0.00"
     end
 
     test "deletes an expense from the list", %{conn: conn, george: george, meks: meks} do
@@ -296,8 +296,8 @@ defmodule QuentaWeb.UserLiveTest do
 
       # Verify the new expense appears
       assert updated_html =~ "New Coffee"
-      assert updated_html =~ "$5.00"
-      assert updated_html =~ "You owe $2.50"
+      assert updated_html =~ "USD $5.00"
+      assert updated_html =~ "You owe USD $2.50"
       refute updated_html =~ "No expenses yet"
     end
 
@@ -357,7 +357,7 @@ defmodule QuentaWeb.UserLiveTest do
       updated_html = render(view)
 
       assert updated_html =~ "Test Expense"
-      assert updated_html =~ "$15.00"
+      assert updated_html =~ "USD $15.00"
     end
 
     test "updates expenses when expense is updated via PubSub", %{
@@ -376,7 +376,7 @@ defmodule QuentaWeb.UserLiveTest do
       {:ok, view, html} = live(conn, ~p"/users/#{meks.id}")
 
       assert html =~ "Old Name"
-      assert html =~ "$12.00"
+      assert html =~ "USD $12.00"
 
       {1, _} =
         Quenta.Repo.update_all(
@@ -396,7 +396,7 @@ defmodule QuentaWeb.UserLiveTest do
       updated_html = render(view)
 
       assert updated_html =~ "Updated Name"
-      assert updated_html =~ "$45.00"
+      assert updated_html =~ "USD $45.00"
       refute updated_html =~ "Old Name"
     end
 
@@ -477,7 +477,7 @@ defmodule QuentaWeb.UserLiveTest do
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 
-      assert html =~ "$123.45"
+      assert html =~ "USD $123.45"
     end
   end
 end
