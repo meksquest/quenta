@@ -29,6 +29,13 @@ defmodule Quenta.Expenses do
   end
 
   def delete_expense(%Expense{} = expense) do
-    Repo.delete(expense)
+    case Repo.delete(expense) do
+      {:ok, deleted_expense} ->
+        PubSub.broadcast_expense_deleted(deleted_expense)
+        {:ok, deleted_expense}
+
+      error ->
+        error
+    end
   end
 end

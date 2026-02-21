@@ -196,5 +196,15 @@ defmodule Quenta.ExpensesTest do
       assert_raise Ecto.NoResultsError, fn -> Expenses.get_expense!(expense.id) end
       assert Quenta.Repo.get(Quenta.ExpenseItems.ExpenseItem, expense_item.id) == nil
     end
+
+    test "broadcasts expense_deleted upon success" do
+      user = insert(:user)
+      expense = insert(:expense, user: user)
+
+      Quenta.PubSub.subscribe_to_expense_deleted()
+      assert {:ok, %{id: deleted_expense_id}} = Expenses.delete_expense(expense)
+      assert_received {:expense_deleted, %{id: received_expense_id}}
+      assert deleted_expense_id == received_expense_id
+    end
   end
 end
