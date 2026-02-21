@@ -31,8 +31,8 @@ defmodule QuentaWeb.UserLive do
       |> assign(:all_users, all_users)
       |> assign(:expenses, expenses_with_balances)
       |> assign(
-        :running_total_cents,
-        calculate_running_total_cents(expenses_with_balances, user.id)
+        :running_totals_by_currency,
+        calculate_running_totals_by_currency(expenses_with_balances)
       )
 
     {:ok, socket}
@@ -60,8 +60,8 @@ defmodule QuentaWeb.UserLive do
          socket
          |> assign(:expenses, expenses_with_balances)
          |> assign(
-           :running_total_cents,
-           calculate_running_total_cents(expenses_with_balances, user.id)
+           :running_totals_by_currency,
+           calculate_running_totals_by_currency(expenses_with_balances)
          )
          |> put_flash(:info, "Expense deleted successfully.")}
 
@@ -83,8 +83,8 @@ defmodule QuentaWeb.UserLive do
       socket
       |> assign(:expenses, expenses_with_balances)
       |> assign(
-        :running_total_cents,
-        calculate_running_total_cents(expenses_with_balances, user.id)
+        :running_totals_by_currency,
+        calculate_running_totals_by_currency(expenses_with_balances)
       )
 
     {:noreply, socket}
@@ -106,8 +106,8 @@ defmodule QuentaWeb.UserLive do
       socket
       |> assign(:expenses, expenses_with_balances)
       |> assign(
-        :running_total_cents,
-        calculate_running_total_cents(expenses_with_balances, user.id)
+        :running_totals_by_currency,
+        calculate_running_totals_by_currency(expenses_with_balances)
       )
 
     {:noreply, socket}
@@ -124,8 +124,8 @@ defmodule QuentaWeb.UserLive do
       socket
       |> assign(:expenses, expenses_with_balances)
       |> assign(
-        :running_total_cents,
-        calculate_running_total_cents(expenses_with_balances, user.id)
+        :running_totals_by_currency,
+        calculate_running_totals_by_currency(expenses_with_balances)
       )
 
     {:noreply, socket}
@@ -148,10 +148,28 @@ defmodule QuentaWeb.UserLive do
     end)
   end
 
-  defp calculate_running_total_cents(expenses_with_balances, _current_user_id) do
-    Enum.reduce(expenses_with_balances, 0, fn expense, total ->
-      total + expense.user_balance
+  defp calculate_running_totals_by_currency(expenses_with_balances) do
+    expenses_with_balances
+    |> Enum.reduce(%{}, fn expense, totals ->
+      currency_code = expense.currency_code || "USD"
+      Map.update(totals, currency_code, expense.user_balance, &(&1 + expense.user_balance))
     end)
+    |> Enum.sort_by(fn {currency_code, _} -> currency_code end)
+  end
+
+  defp format_current_balance_line(currency_code, amount_cents, _user_name, other_user_name) do
+    formatted_amount = "#{currency_code} #{format_cents_to_dollars(abs(amount_cents))}"
+
+    cond do
+      amount_cents > 0 ->
+        {"You owe #{other_user_name} #{formatted_amount}", "text-red-400"}
+
+      amount_cents < 0 ->
+        {"#{other_user_name} owes you #{formatted_amount}", "text-green-400"}
+
+      true ->
+        {"Even #{formatted_amount}", "text-slate-400"}
+    end
   end
 
   defp format_date(date) do
@@ -222,16 +240,21 @@ defmodule QuentaWeb.UserLive do
         <div class="rounded-lg border border-slate-700 bg-slate-800 text-slate-200 shadow-sm mb-8">
           <div class="p-6">
             <div class="text-center">
-              <h2 class="text-lg font-medium text-slate-200 mb-2">Current Balance</h2>
-              <div class="text-3xl font-bold">
-                <%= if @running_total_cents >= 0 do %>
-                  <span class="text-red-400">
-                    You owe {@other_user.name} {format_cents_to_dollars(@running_total_cents)}
-                  </span>
+              <h2 class="text-lg font-medium text-slate-200 mb-2">Current Balances</h2>
+              <div class="space-y-2 text-lg sm:text-2xl font-bold">
+                <%= if @running_totals_by_currency == [] do %>
+                  <span class="text-slate-400">No balances yet</span>
                 <% else %>
-                  <span class="text-green-400">
-                    {@other_user.name} owes you {format_cents_to_dollars(abs(@running_total_cents))}
-                  </span>
+                  <%= for {currency_code, amount_cents} <- @running_totals_by_currency do %>
+                    <% {line, color_class} =
+                      format_current_balance_line(
+                        currency_code,
+                        amount_cents,
+                        @user.name,
+                        @other_user.name
+                      ) %>
+                    <div class={color_class}>{line}</div>
+                  <% end %>
                 <% end %>
               </div>
             </div>

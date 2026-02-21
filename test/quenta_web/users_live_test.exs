@@ -106,7 +106,7 @@ defmodule QuentaWeb.UserLiveTest do
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 
       # Meks should owe George money
-      assert html =~ "You owe George $10.00"
+      assert html =~ "You owe George USD $10.00"
       assert html =~ "You owe USD $10.00"
     end
 
@@ -122,7 +122,7 @@ defmodule QuentaWeb.UserLiveTest do
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 
       # George should owe Meks money
-      assert html =~ "George owes you $15.00"
+      assert html =~ "George owes you USD $15.00"
       assert html =~ "You lent USD $15.00"
     end
 
@@ -150,7 +150,34 @@ defmodule QuentaWeb.UserLiveTest do
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 
       # Net: Meks owes $10, George owes $15, so George owes Meks $5
-      assert html =~ "George owes you $5.00"
+      assert html =~ "George owes you USD $5.00"
+    end
+
+    test "displays current balances for multiple currencies", %{
+      conn: conn,
+      george: george,
+      meks: meks
+    } do
+      insert(:expense,
+        description: "Dinner USD",
+        amount_cents: 2000,
+        date: ~D[2023-10-01],
+        user: george,
+        currency_code: "USD"
+      )
+
+      insert(:expense,
+        description: "Groceries NZD",
+        amount_cents: 3000,
+        date: ~D[2023-10-02],
+        user: meks,
+        currency_code: "NZD"
+      )
+
+      {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
+
+      assert html =~ "You owe George USD $10.00"
+      assert html =~ "George owes you NZD $15.00"
     end
 
     test "displays expense items when present", %{conn: conn, george: george, meks: meks} do
@@ -317,7 +344,7 @@ defmodule QuentaWeb.UserLiveTest do
       {:ok, view, html} = live(conn, ~p"/users/#{meks.id}")
 
       # Check initial balance
-      assert html =~ "You owe George $5.00"
+      assert html =~ "You owe George USD $5.00"
 
       # Add another expense
       expense =
@@ -333,7 +360,7 @@ defmodule QuentaWeb.UserLiveTest do
       updated_html = render(view)
 
       # Running total should be updated ($5 + $10 = $15)
-      assert updated_html =~ "You owe George $15.00"
+      assert updated_html =~ "You owe George USD $15.00"
     end
 
     test "subscribes to expense_added on mount", %{conn: conn, george: george, meks: meks} do
