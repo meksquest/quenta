@@ -225,6 +225,28 @@ defmodule QuentaWeb.UserLiveTest do
 
       assert html =~ "Even $0.00"
     end
+
+    test "deletes an expense from the list", %{conn: conn, george: george, meks: meks} do
+      expense =
+        insert(:expense,
+          description: "Deletable Expense",
+          amount_cents: 1200,
+          date: ~D[2023-10-02],
+          user: george
+        )
+
+      {:ok, view, html} = live(conn, ~p"/users/#{meks.id}")
+
+      assert html =~ "Deletable Expense"
+
+      view
+      |> element("button[phx-click='delete_expense'][phx-value-id='#{expense.id}']")
+      |> render_click()
+
+      updated_html = render(view)
+
+      refute updated_html =~ "Deletable Expense"
+    end
   end
 
   describe "UserLive PubSub functionality" do

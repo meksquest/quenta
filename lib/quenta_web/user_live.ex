@@ -42,6 +42,33 @@ defmodule QuentaWeb.UserLive do
   end
 
   @impl Phoenix.LiveView
+  def handle_event("delete_expense", %{"id" => id}, socket) do
+    %{expenses: expenses, user: user, all_users: all_users} = socket.assigns
+    expense_id = String.to_integer(id)
+    expense = Expenses.get_expense!(expense_id)
+
+    case Expenses.delete_expense(expense) do
+      {:ok, _} ->
+        updated_expenses = Enum.reject(expenses, &(&1.id == expense.id))
+
+        expenses_with_balances =
+          calculate_expenses_with_balances(updated_expenses, all_users, user.id)
+
+        {:noreply,
+         socket
+         |> assign(:expenses, expenses_with_balances)
+         |> assign(
+           :running_total_cents,
+           calculate_running_total_cents(expenses_with_balances, user.id)
+         )
+         |> put_flash(:info, "Expense deleted successfully.")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Unable to delete expense.")}
+    end
+  end
+
+  @impl Phoenix.LiveView
   def handle_info({:expense_added, %Quenta.Expenses.Expense{} = expense}, socket) do
     %{expenses: expenses, all_users: all_users, user: user} = socket.assigns
     preloaded_expense = Quenta.Repo.preload(expense, [:user, :expense_items])
@@ -208,6 +235,17 @@ defmodule QuentaWeb.UserLive do
                       <span class={color_class}>
                         {label} {amount}
                       </span>
+                    </div>
+                    <div class="mt-3">
+                      <button
+                        type="button"
+                        phx-click="delete_expense"
+                        phx-value-id={expense.id}
+                        phx-confirm="Delete this expense?"
+                        class="text-xs text-red-300 hover:text-red-200"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>
