@@ -58,6 +58,14 @@ defmodule Quenta.Expenses do
     |> Repo.preload(:expense_items)
     |> Expense.changeset(attrs)
     |> Repo.update()
+    |> case do
+      {:ok, updated_expense} ->
+        PubSub.broadcast_expense_updated(updated_expense)
+        {:ok, updated_expense}
+
+      error ->
+        error
+    end
   end
 
   def delete_expense(%Expense{} = expense) do

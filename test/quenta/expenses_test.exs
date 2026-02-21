@@ -325,6 +325,53 @@ defmodule Quenta.ExpensesTest do
       assert Enum.any?(updated.expense_items, &(&1.id == item_1.id))
       refute Enum.any?(updated.expense_items, &(&1.id == item_2.id))
     end
+
+    test "broadcasts expense_updated upon success" do
+      user = insert(:user)
+
+      expense =
+        insert(:expense,
+          user: user,
+          description: "Old",
+          amount_cents: 1000,
+          date: ~D[2023-10-01]
+        )
+
+      params = %{
+        "description" => "New",
+        "amount_dollars" => 12.50,
+        "date" => ~D[2023-10-02],
+        "user_id" => user.id
+      }
+
+      Quenta.PubSub.subscribe_to_expense_updated()
+      assert {:ok, %{id: updated_expense_id}} = Expenses.update_expense(expense, params)
+      assert_received {:expense_updated, %{id: received_expense_id}}
+      assert updated_expense_id == received_expense_id
+    end
+
+    test "does not broadcast expense_updated upon failure" do
+      user = insert(:user)
+
+      expense =
+        insert(:expense,
+          user: user,
+          description: "Old",
+          amount_cents: 1000,
+          date: ~D[2023-10-01]
+        )
+
+      params = %{
+        "description" => "",
+        "amount_dollars" => nil,
+        "date" => nil,
+        "user_id" => nil
+      }
+
+      Quenta.PubSub.subscribe_to_expense_updated()
+      assert {:error, _changeset} = Expenses.update_expense(expense, params)
+      refute_received {:expense_updated, _}
+    end
   end
 
   describe "delete_expense/1" do
