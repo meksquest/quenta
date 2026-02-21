@@ -38,4 +38,19 @@ defmodule Quenta.PubSub do
     payload = {:expense_added, expense}
     broadcast!("expense_added", payload)
   end
+
+  @doc """
+  Subscribes to `expense` deleted
+  """
+  def subscribe_to_expense_deleted do
+    subscribe!("expense_deleted")
+  end
+
+  @doc """
+  Broadcasts `expense` deleted
+  """
+  def broadcast_expense_deleted(expense) do
+    payload = {:expense_deleted, expense}
+    broadcast!("expense_deleted", payload)
+  end
 end
