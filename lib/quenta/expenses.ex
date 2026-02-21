@@ -27,4 +27,8 @@ defmodule Quenta.Expenses do
     preloads = Keyword.get(opts, :preloads, [])
     Expense |> Repo.get!(id) |> Repo.preload(preloads)
   end
+
+  def delete_expense(%Expense{} = expense) do
+    Repo.delete(expense)
+  end
 end

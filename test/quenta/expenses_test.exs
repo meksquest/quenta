@@ -180,4 +180,21 @@ defmodule Quenta.ExpensesTest do
       end
     end
   end
+
+  describe "delete_expense/1" do
+    test "deletes the expense and its expense items" do
+      user = insert(:user)
+      expense = insert(:expense, user: user)
+
+      expense_item =
+        insert(:expense_item,
+          expense: expense,
+          user: user
+        )
+
+      assert {:ok, _} = Expenses.delete_expense(expense)
+      assert_raise Ecto.NoResultsError, fn -> Expenses.get_expense!(expense.id) end
+      assert Quenta.Repo.get(Quenta.ExpenseItems.ExpenseItem, expense_item.id) == nil
+    end
+  end
 end
