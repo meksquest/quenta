@@ -190,8 +190,22 @@ defmodule Quenta.ExpensesTest do
       expense = Expenses.get_expense_for_edit!(expense.id)
 
       assert Decimal.equal?(expense.amount_dollars, Decimal.new("12.34"))
+      assert Decimal.to_string(expense.amount_dollars, :normal) == "12.34"
       assert [loaded_item] = expense.expense_items
       assert Decimal.equal?(loaded_item.amount_dollars, Decimal.new("5.67"))
+      assert Decimal.to_string(loaded_item.amount_dollars, :normal) == "5.67"
+    end
+
+    test "preserves trailing zeros for whole-dollar amounts" do
+      user = insert(:user)
+      expense = insert(:expense, user: user, amount_cents: 2500)
+      _item = insert(:expense_item, expense: expense, user: user, amount_cents: 3000)
+
+      expense = Expenses.get_expense_for_edit!(expense.id)
+
+      assert Decimal.to_string(expense.amount_dollars, :normal) == "25.00"
+      assert [loaded_item] = expense.expense_items
+      assert Decimal.to_string(loaded_item.amount_dollars, :normal) == "30.00"
     end
   end
 

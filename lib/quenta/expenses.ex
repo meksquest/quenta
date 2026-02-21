@@ -50,6 +50,7 @@ defmodule Quenta.Expenses do
     cents
     |> Decimal.new()
     |> Decimal.div(100)
+    |> Decimal.round(2)
   end
 
   def update_expense(%Expense{} = expense, attrs) do
