@@ -386,8 +386,7 @@ defmodule Quenta.ExpensesTest do
 
       Quenta.PubSub.subscribe_to_expense_updated()
       assert {:ok, %{id: updated_expense_id}} = Expenses.update_expense(expense, params)
-      assert_received {:expense_updated, %{id: received_expense_id}}
-      assert updated_expense_id == received_expense_id
+      assert_receive {:expense_updated, %{id: ^updated_expense_id}}
     end
 
     test "does not broadcast expense_updated upon failure" do
