@@ -35,3 +35,5 @@ quenta-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# environment variable files
+.env

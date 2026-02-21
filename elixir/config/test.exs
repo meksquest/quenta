@@ -9,6 +9,7 @@ config :quenta, Quenta.Repo,
   username: "postgres",
   password: "password",
   hostname: "localhost",
+  port: 5432,
   database: "quenta_ex_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
