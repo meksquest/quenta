@@ -50,6 +50,21 @@ defmodule Quenta.ExpensesTest do
       assert expense.user_id == user.id
     end
 
+    test "defaults currency_code to USD when missing" do
+      user = insert(:user)
+
+      params = %{
+        "description" => "Lunch",
+        "amount_dollars" => 15.00,
+        "date" => ~D[2023-10-01],
+        "user_id" => user.id
+      }
+
+      assert {:ok, expense} = Expenses.create_expense(params)
+      expense = Quenta.Repo.get!(Quenta.Expenses.Expense, expense.id)
+      assert expense.currency_code == "USD"
+    end
+
     test "creates a new expense and associated expense_item" do
       user1 = insert(:user)
       user2 = insert(:user)
@@ -210,6 +225,31 @@ defmodule Quenta.ExpensesTest do
   end
 
   describe "update_expense/2" do
+    test "defaults currency_code to USD on update when set to nil" do
+      user = insert(:user)
+
+      expense =
+        insert(:expense,
+          user: user,
+          description: "Old",
+          amount_cents: 1000,
+          date: ~D[2023-10-01],
+          currency_code: "NZD"
+        )
+
+      params = %{
+        "description" => "Old",
+        "amount_dollars" => 10.00,
+        "date" => ~D[2023-10-01],
+        "user_id" => user.id,
+        "currency_code" => nil
+      }
+
+      assert {:ok, updated} = Expenses.update_expense(expense, params)
+      updated = Quenta.Repo.get!(Quenta.Expenses.Expense, updated.id)
+      assert updated.currency_code == "USD"
+    end
+
     test "updates an expense and its items" do
       user = insert(:user)
 

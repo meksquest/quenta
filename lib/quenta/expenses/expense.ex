@@ -12,10 +12,15 @@ defmodule Quenta.Expenses.Expense do
 
     has_many :expense_items, Quenta.ExpenseItems.ExpenseItem, on_replace: :delete
 
+    belongs_to :currency, Quenta.Currencies.Currency,
+      foreign_key: :currency_code,
+      references: :code,
+      type: :string
+
     timestamps()
   end
 
-  @fields ~w(description date amount_dollars user_id)a
+  @fields ~w(description date amount_dollars currency_code user_id)a
 
   def changeset(expense, attrs) do
     expense
@@ -24,10 +29,18 @@ defmodule Quenta.Expenses.Expense do
       sort_param: :expense_items_sort,
       drop_param: :expense_items_drop
     )
+    |> put_default_currency()
     |> validate_required(@fields)
     |> validate_number(:amount_dollars, greater_than: 0, less_than_or_equal_to: 21_474_836)
     |> convert_dollars_to_cents()
     |> assoc_constraint(:user)
+  end
+
+  defp put_default_currency(changeset) do
+    case get_field(changeset, :currency_code) do
+      nil -> put_change(changeset, :currency_code, "USD")
+      _ -> changeset
+    end
   end
 
   defp convert_dollars_to_cents(changeset) do

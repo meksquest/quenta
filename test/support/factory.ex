@@ -12,6 +12,7 @@ defmodule Quenta.Factory do
       description: sequence(:description, &"Expense #{&1}"),
       date: ~D[2023-10-01],
       amount_cents: 1500,
+      currency_code: "USD",
       user: build(:user)
     }
   end
