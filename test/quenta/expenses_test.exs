@@ -152,4 +152,32 @@ defmodule Quenta.ExpensesTest do
     assert retrieved_expense.date == ~D[2023-10-02]
     assert retrieved_expense.id == expense.id
   end
+
+  describe "get_expense!/2" do
+    test "returns the expense by id" do
+      user = insert(:user)
+
+      expense =
+        insert(:expense,
+          description: "Taxi",
+          amount_cents: 2200,
+          date: ~D[2023-10-03],
+          user: user
+        )
+
+      retrieved = Expenses.get_expense!(expense.id)
+
+      assert retrieved.id == expense.id
+      assert retrieved.description == "Taxi"
+      assert retrieved.amount_cents == 2200
+      assert retrieved.date == ~D[2023-10-03]
+      assert retrieved.user_id == user.id
+    end
+
+    test "raises when the expense is not found" do
+      assert_raise Ecto.NoResultsError, fn ->
+        Expenses.get_expense!(999_999)
+      end
+    end
+  end
 end

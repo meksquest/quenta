@@ -22,4 +22,9 @@ defmodule Quenta.Expenses do
     preloads = Keyword.get(opts, :preloads, [])
     Expense |> Repo.all() |> Repo.preload(preloads)
   end
+
+  def get_expense!(id, opts \\ []) do
+    preloads = Keyword.get(opts, :preloads, [])
+    Expense |> Repo.get!(id) |> Repo.preload(preloads)
+  end
 end
