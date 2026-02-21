@@ -4,15 +4,21 @@ defmodule QuentaWeb.ExpensesLive.New do
   alias Quenta.Expenses
   alias Quenta.Expenses.Expense
   alias Quenta.Users
+  alias Quenta.Currencies
 
   def mount(%{"user_id" => user_id}, _session, socket) do
     form = %Expense{} |> Expenses.change_expense(%{}) |> to_form()
     user_options = Users.list_users() |> Enum.map(fn user -> {user.name, user.id} end)
 
+    currency_options =
+      Currencies.list_currency_codes()
+      |> Enum.map(fn code -> {code, code} end)
+
     socket =
       socket
       |> assign(:form, form)
       |> assign(:user_options, user_options)
+      |> assign(:currency_options, currency_options)
       |> assign(:user_id, user_id)
 
     {:ok, socket}
@@ -83,6 +89,22 @@ defmodule QuentaWeb.ExpensesLive.New do
                     type="text"
                     field={@form[:description]}
                     placeholder="Enter expense description..."
+                  />
+                </div>
+
+                <div>
+                  <label
+                    for={@form[:currency_code].id}
+                    class="block text-sm font-medium text-slate-200 mb-2"
+                  >
+                    Currency *
+                  </label>
+                  <.input
+                    id={@form[:currency_code].id}
+                    name={@form[:currency_code].name}
+                    type="select"
+                    options={@currency_options}
+                    value={@form[:currency_code].value}
                   />
                 </div>
 

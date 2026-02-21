@@ -15,6 +15,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
     assert render(view) =~ "Description"
     assert render(view) =~ "Amount"
     assert render(view) =~ "Date"
+    assert render(view) =~ "Currency"
     assert render(view) =~ "Paid By"
   end
 
@@ -28,7 +29,8 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
         amount_dollars: "100.00",
         description: "Test Expense",
         user_id: george.id,
-        date: "2023-10-01"
+        date: "2023-10-01",
+        currency_code: "USD"
       }
     })
 
@@ -45,7 +47,8 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
         amount_cents: "",
         description: "",
         user_id: "",
-        date: ""
+        date: "",
+        currency_code: ""
       }
     })
 
@@ -64,6 +67,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
         description: "Test Expense",
         user_id: george.id,
         date: "2023-10-01",
+        currency_code: "USD",
         expense_items: %{
           "0" => %{
             description: "Item 1",
@@ -93,6 +97,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
         description: "Test Expense",
         user_id: george.id,
         date: "2023-10-01",
+        currency_code: "",
         expense_items: %{
           "0" => %{
             description: "",
