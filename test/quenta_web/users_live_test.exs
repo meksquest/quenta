@@ -38,6 +38,24 @@ defmodule QuentaWeb.UserLiveTest do
       assert html =~ ~p"/users/#{meks.id}/expenses/new"
     end
 
+    test "edit link navigates to expense edit page", %{conn: conn, george: george, meks: meks} do
+      expense =
+        insert(:expense,
+          description: "Edit Me",
+          amount_cents: 1200,
+          date: ~D[2023-10-02],
+          user: george
+        )
+
+      {:ok, view, _html} = live(conn, ~p"/users/#{meks.id}")
+
+      view
+      |> element("a[href='#{~p"/users/#{meks.id}/expenses/#{expense.id}/edit"}']", "Edit")
+      |> render_click()
+
+      assert_redirected(view, ~p"/users/#{meks.id}/expenses/#{expense.id}/edit")
+    end
+
     test "displays empty state when no expenses", %{conn: conn, meks: meks} do
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
 

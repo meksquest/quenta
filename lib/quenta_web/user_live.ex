@@ -256,7 +256,13 @@ defmodule QuentaWeb.UserLive do
                         {label} {amount}
                       </span>
                     </div>
-                    <div class="mt-3">
+                    <div class="mt-3 flex items-center gap-3">
+                      <.link
+                        navigate={~p"/users/#{@user.id}/expenses/#{expense.id}/edit"}
+                        class="text-xs text-blue-300 hover:text-blue-200"
+                      >
+                        Edit
+                      </.link>
                       <button
                         type="button"
                         phx-click="delete_expense"
