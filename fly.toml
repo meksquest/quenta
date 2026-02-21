@@ -1,6 +1,9 @@
 app = 'quenta-ex'
 primary_region = 'mad'
 
+[deploy]
+  release_command = "/app/bin/migrate"
+
 [build]
   dockerfile = 'Dockerfile'
 
