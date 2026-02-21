@@ -359,6 +359,42 @@ defmodule QuentaWeb.UserLiveTest do
       assert updated_html =~ "$15.00"
     end
 
+    test "updates expenses when expense is updated via PubSub", %{
+      conn: conn,
+      george: george,
+      meks: meks
+    } do
+      expense =
+        insert(:expense,
+          description: "Old Name",
+          amount_cents: 1200,
+          date: ~D[2023-10-03],
+          user: george
+        )
+
+      {:ok, view, html} = live(conn, ~p"/users/#{meks.id}")
+
+      assert html =~ "Old Name"
+      assert html =~ "$12.00"
+
+      updated_expense =
+        insert(:expense,
+          id: expense.id,
+          description: "Updated Name",
+          amount_cents: 4500,
+          date: ~D[2023-10-04],
+          user: george
+        )
+
+      PubSub.broadcast_expense_updated(updated_expense)
+
+      updated_html = render(view)
+
+      assert updated_html =~ "Updated Name"
+      assert updated_html =~ "$45.00"
+      refute updated_html =~ "Old Name"
+    end
+
     test "updates expenses when expense is deleted via PubSub", %{
       conn: conn,
       george: george,
