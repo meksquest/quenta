@@ -261,7 +261,7 @@ defmodule QuentaWeb.UserLive do
                         type="button"
                         phx-click="delete_expense"
                         phx-value-id={expense.id}
-                        phx-confirm="Delete this expense?"
+                        data-confirm="Delete this expense?"
                         class="text-xs text-red-300 hover:text-red-200"
                       >
                         Delete
