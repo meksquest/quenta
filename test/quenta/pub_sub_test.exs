@@ -181,6 +181,84 @@ defmodule Quenta.PubSubTest do
     end
   end
 
+  describe "subscribe_to_expense_updated/0" do
+    test "subscribes to expense_updated topic" do
+      assert :ok = PubSub.subscribe_to_expense_updated()
+
+      payload = {:expense_updated, %{id: 1, description: "test"}}
+      :ok = PubSub.broadcast!("expense_updated", payload)
+
+      assert_receive {:expense_updated, %{id: 1, description: "test"}}
+    end
+
+    test "receives messages from broadcast_expense_updated/1" do
+      :ok = PubSub.subscribe_to_expense_updated()
+
+      expense = %{id: 222, description: "Updated Coffee", amount_dollars: 4.25}
+      :ok = PubSub.broadcast_expense_updated(expense)
+
+      assert_receive {:expense_updated, ^expense}
+    end
+  end
+
+  describe "broadcast_expense_updated/1" do
+    test "broadcasts expense with correct payload format" do
+      :ok = PubSub.subscribe!("expense_updated")
+
+      expense = %{
+        id: 333,
+        description: "Updated Lunch",
+        amount_dollars: 12.99,
+        date: ~D[2023-10-15],
+        user_id: 1
+      }
+
+      assert :ok = PubSub.broadcast_expense_updated(expense)
+
+      assert_receive {:expense_updated, received_expense}
+      assert received_expense == expense
+    end
+
+    test "broadcasts to multiple subscribers" do
+      :ok = PubSub.subscribe_to_expense_updated()
+
+      parent = self()
+
+      spawn(fn ->
+        :ok = PubSub.subscribe_to_expense_updated()
+        send(parent, :child_subscribed)
+
+        receive do
+          message -> send(parent, {:child_received, message})
+        end
+      end)
+
+      assert_receive :child_subscribed
+
+      expense = %{id: 444, description: "Shared update", amount_dollars: 50.00}
+      :ok = PubSub.broadcast_expense_updated(expense)
+
+      assert_receive {:expense_updated, ^expense}
+      assert_receive {:child_received, {:expense_updated, ^expense}}
+    end
+
+    test "handles nil expense gracefully" do
+      :ok = PubSub.subscribe_to_expense_updated()
+
+      assert :ok = PubSub.broadcast_expense_updated(nil)
+      assert_receive {:expense_updated, nil}
+    end
+
+    test "handles expense with missing fields" do
+      :ok = PubSub.subscribe_to_expense_updated()
+
+      incomplete_expense = %{id: 555}
+      assert :ok = PubSub.broadcast_expense_updated(incomplete_expense)
+
+      assert_receive {:expense_updated, %{id: 555}}
+    end
+  end
+
   describe "subscribe_to_expense_deleted/0" do
     test "subscribes to expense_deleted topic" do
       assert :ok = PubSub.subscribe_to_expense_deleted()
