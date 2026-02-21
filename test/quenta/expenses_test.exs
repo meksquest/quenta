@@ -181,6 +181,19 @@ defmodule Quenta.ExpensesTest do
     end
   end
 
+  describe "get_expense_for_edit!/1" do
+    test "hydrates amount_dollars for expense and items" do
+      user = insert(:user)
+      expense = insert(:expense, user: user, amount_cents: 1234)
+      _item = insert(:expense_item, expense: expense, user: user, amount_cents: 567)
+
+      expense = Expenses.get_expense_for_edit!(expense.id)
+
+      assert Decimal.equal?(expense.amount_dollars, Decimal.new("12.34"))
+      assert [loaded_item] = expense.expense_items
+      assert Decimal.equal?(loaded_item.amount_dollars, Decimal.new("5.67"))
+    end
+  end
   describe "delete_expense/1" do
     test "deletes the expense and its expense items" do
       user = insert(:user)
