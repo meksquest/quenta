@@ -37,3 +37,6 @@ npm-debug.log
 
 # environment variable files
 .env
+
+# macos finder files
+.DS_Store
