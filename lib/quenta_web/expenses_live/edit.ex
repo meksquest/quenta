@@ -171,7 +171,7 @@ defmodule QuentaWeb.ExpensesLive.Edit do
               <div class="space-y-4">
                 <.inputs_for :let={eif} field={@form[:expense_items]}>
                   <input type="hidden" name="expense[expense_items_sort][]" value={eif.index} />
-                  <.input type="hidden" field={eif[:id]} />
+                  <input type="hidden" id={eif[:id].id} name={eif[:id].name} value={eif[:id].value} />
 
                   <div class="bg-slate-700 rounded-lg border border-slate-600 p-4 relative group">
                     <!-- Remove Button -->
