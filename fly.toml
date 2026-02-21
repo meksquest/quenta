@@ -17,4 +17,4 @@ primary_region = 'mad'
 
 [env]
   PHX_SERVER = 'true'
-  PHX_HOST = 'ex.quenta.pro'
+  PHX_HOST = 'quenta.pro'
