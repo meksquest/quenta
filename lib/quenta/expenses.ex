@@ -51,6 +51,14 @@ defmodule Quenta.Expenses do
     |> Decimal.new()
     |> Decimal.div(100)
   end
+
+  def update_expense(%Expense{} = expense, attrs) do
+    expense
+    |> Repo.preload(:expense_items)
+    |> Expense.changeset(attrs)
+    |> Repo.update()
+  end
+
   def delete_expense(%Expense{} = expense) do
     case Repo.delete(expense) do
       {:ok, deleted_expense} ->

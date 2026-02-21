@@ -194,6 +194,125 @@ defmodule Quenta.ExpensesTest do
       assert Decimal.equal?(loaded_item.amount_dollars, Decimal.new("5.67"))
     end
   end
+
+  describe "update_expense/2" do
+    test "updates an expense and its items" do
+      user = insert(:user)
+
+      expense =
+        insert(:expense,
+          user: user,
+          description: "Old",
+          amount_cents: 1000,
+          date: ~D[2023-10-01]
+        )
+
+      item =
+        insert(:expense_item,
+          expense: expense,
+          user: user,
+          description: "Old item",
+          amount_cents: 250
+        )
+
+      params = %{
+        "description" => "New",
+        "amount_dollars" => 20.00,
+        "date" => ~D[2023-10-02],
+        "user_id" => user.id,
+        "expense_items" => [
+          %{
+            "id" => item.id,
+            "description" => "Updated item",
+            "amount_dollars" => 7.50,
+            "user_id" => user.id
+          },
+          %{
+            "description" => "New item",
+            "amount_dollars" => 2.25,
+            "user_id" => user.id
+          }
+        ]
+      }
+
+      assert {:ok, updated} = Expenses.update_expense(expense, params)
+      assert updated.description == "New"
+      assert updated.amount_cents == 2000
+      assert updated.date == ~D[2023-10-02]
+
+      updated = Quenta.Repo.preload(updated, :expense_items)
+      assert length(updated.expense_items) == 2
+
+      assert Enum.any?(
+               updated.expense_items,
+               &(&1.description == "Updated item" && &1.amount_cents == 750)
+             )
+
+      assert Enum.any?(
+               updated.expense_items,
+               &(&1.description == "New item" && &1.amount_cents == 225)
+             )
+    end
+
+    test "drops an expense item when marked for removal" do
+      user = insert(:user)
+
+      expense =
+        insert(:expense,
+          user: user,
+          description: "Old",
+          amount_cents: 1000,
+          date: ~D[2023-10-01]
+        )
+
+      item_1 =
+        insert(:expense_item,
+          expense: expense,
+          user: user,
+          description: "Keep item",
+          amount_cents: 300
+        )
+
+      item_2 =
+        insert(:expense_item,
+          expense: expense,
+          user: user,
+          description: "Drop item",
+          amount_cents: 200
+        )
+
+      params = %{
+        "description" => "Updated",
+        "amount_dollars" => 10.00,
+        "date" => ~D[2023-10-02],
+        "user_id" => user.id,
+        "expense_items_sort" => ["0", "1"],
+        "expense_items_drop" => ["1"],
+        "expense_items" => %{
+          "0" => %{
+            "id" => item_1.id,
+            "description" => "Keep item",
+            "amount_dollars" => 3.00,
+            "user_id" => user.id
+          },
+          "1" => %{
+            "id" => item_2.id,
+            "description" => "Drop item",
+            "amount_dollars" => 2.00,
+            "user_id" => user.id
+          }
+        }
+      }
+
+      assert {:ok, updated} = Expenses.update_expense(expense, params)
+
+      updated = Quenta.Repo.preload(updated, :expense_items)
+      assert length(updated.expense_items) == 1
+      assert Enum.any?(updated.expense_items, &(&1.id == item_1.id))
+      refute Enum.any?(updated.expense_items, &(&1.id == item_2.id))
+    end
+  end
+
   describe "delete_expense/1" do
     test "deletes the expense and its expense items" do
       user = insert(:user)
