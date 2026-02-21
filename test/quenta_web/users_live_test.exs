@@ -2,6 +2,7 @@ defmodule QuentaWeb.UserLiveTest do
   use QuentaWeb.ConnCase
 
   import Phoenix.LiveViewTest
+  import Ecto.Query
 
   alias Quenta.PubSub
   alias Quenta.Users
@@ -377,14 +378,18 @@ defmodule QuentaWeb.UserLiveTest do
       assert html =~ "Old Name"
       assert html =~ "$12.00"
 
-      updated_expense =
-        insert(:expense,
-          id: expense.id,
-          description: "Updated Name",
-          amount_cents: 4500,
-          date: ~D[2023-10-04],
-          user: george
+      {1, _} =
+        Quenta.Repo.update_all(
+          from(e in Quenta.Expenses.Expense, where: e.id == ^expense.id),
+          set: [
+            description: "Updated Name",
+            amount_cents: 4500,
+            date: ~D[2023-10-04],
+            user_id: george.id
+          ]
         )
+
+      updated_expense = Quenta.Repo.get!(Quenta.Expenses.Expense, expense.id)
 
       PubSub.broadcast_expense_updated(updated_expense)
 
