@@ -1,5 +1,5 @@
 app = 'quenta-ex'
-primary_region = 'mad'
+primary_region = 'cdg'
 
 [deploy]
   release_command = "/app/bin/migrate"
