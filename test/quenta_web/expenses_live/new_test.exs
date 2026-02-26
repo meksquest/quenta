@@ -10,6 +10,8 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
   end
 
   test "renders new expense form", %{conn: conn, george: george} do
+    insert(:expense, user: george, currency_code: "USD")
+
     {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
 
     assert render(view) =~ "Description"
@@ -17,6 +19,8 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
     assert render(view) =~ "Date"
     assert render(view) =~ "Currency"
     assert render(view) =~ "Paid By"
+    assert render(view) =~ "Recently used"
+    assert render(view) =~ "All currencies"
     assert render(view) =~ "USD - United States Dollar"
   end
 
