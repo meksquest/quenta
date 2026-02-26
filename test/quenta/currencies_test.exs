@@ -75,9 +75,15 @@ defmodule Quenta.CurrenciesTest do
       })
 
       assert Currencies.list_currency_options_for_user(user.id) == [
-               {"USD - United States Dollar", "USD"},
-               {"EUR - Euro", "EUR"},
-               {"JPY - Japanese Yen", "JPY"}
+               {"Recently used",
+                [
+                  {"USD - United States Dollar", "USD"},
+                  {"EUR - Euro", "EUR"}
+                ]},
+               {"All currencies",
+                [
+                  {"JPY - Japanese Yen", "JPY"}
+                ]}
              ]
     end
 

@@ -47,7 +47,25 @@ defmodule Quenta.Currencies do
       remaining_currencies
       |> Enum.sort_by(& &1.code)
 
-    (recent_sorted ++ remaining_sorted)
-    |> Enum.map(fn currency -> {"#{currency.code} - #{currency.name}", currency.code} end)
+    recent_options =
+      Enum.map(recent_sorted, fn currency ->
+        {"#{currency.code} - #{currency.name}", currency.code}
+      end)
+
+    remaining_options =
+      Enum.map(remaining_sorted, fn currency ->
+        {"#{currency.code} - #{currency.name}", currency.code}
+      end)
+
+    case recent_options do
+      [] ->
+        remaining_options
+
+      _ ->
+        [
+          {"Recently used", recent_options},
+          {"All currencies", remaining_options}
+        ]
+    end
   end
 end
