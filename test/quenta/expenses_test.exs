@@ -67,19 +67,19 @@ defmodule Quenta.ExpensesTest do
     end
 
     test "creates a new expense and associated expense_item" do
-      user1 = insert(:user)
-      user2 = insert(:user)
+      user_1 = insert(:user)
+      user_2 = insert(:user)
 
       params = %{
         "description" => "Lunch",
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
-        "user_id" => user1.id,
+        "user_id" => user_1.id,
         "expense_items" => [
           %{
             description: "Item 1",
             amount_dollars: 5.00,
-            user_id: user2.id
+            user_id: user_2.id
           }
         ]
       }
@@ -92,7 +92,7 @@ defmodule Quenta.ExpensesTest do
       assert [expense_item] = expense.expense_items
       assert expense_item.description == "Item 1"
       assert expense_item.amount_cents == 500
-      assert expense_item.user_id == user2.id
+      assert expense_item.user_id == user_2.id
     end
 
     test "returns an error when required fields are missing" do
@@ -112,19 +112,19 @@ defmodule Quenta.ExpensesTest do
     end
 
     test "broadcasts expense_added upon success" do
-      user1 = insert(:user)
-      user2 = insert(:user)
+      user_1 = insert(:user)
+      user_2 = insert(:user)
 
       params = %{
         "description" => "Lunch",
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
-        "user_id" => user1.id,
+        "user_id" => user_1.id,
         "expense_items" => [
           %{
             description: "Item 1",
             amount_dollars: 5.00,
-            user_id: user2.id
+            user_id: user_2.id
           }
         ]
       }

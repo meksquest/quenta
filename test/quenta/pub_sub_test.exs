@@ -71,19 +71,19 @@ defmodule Quenta.PubSubTest do
     end
 
     test "subscribes to different topics independently" do
-      topic1 = "topic_one"
-      topic2 = "topic_two"
+      topic_1 = "topic_one"
+      topic_2 = "topic_two"
 
-      :ok = PubSub.subscribe!(topic1)
-      :ok = PubSub.subscribe!(topic2)
+      :ok = PubSub.subscribe!(topic_1)
+      :ok = PubSub.subscribe!(topic_2)
 
       # Broadcast to topic1
-      :ok = PubSub.broadcast!(topic1, {:topic1_message, "first"})
-      assert_receive {:topic1_message, "first"}
+      :ok = PubSub.broadcast!(topic_1, {:topic_1_message, "first"})
+      assert_receive {:topic_1_message, "first"}
 
       # Broadcast to topic2
-      :ok = PubSub.broadcast!(topic2, {:topic2_message, "second"})
-      assert_receive {:topic2_message, "second"}
+      :ok = PubSub.broadcast!(topic_2, {:topic_2_message, "second"})
+      assert_receive {:topic_2_message, "second"}
     end
   end
 
