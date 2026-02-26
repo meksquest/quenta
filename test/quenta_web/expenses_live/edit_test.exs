@@ -28,6 +28,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
     assert html =~ "Date"
     assert html =~ "Currency"
     assert html =~ "Paid By"
+    assert html =~ "USD - United States Dollar"
     assert html =~ "Lunch"
     assert html =~ "value=\"Lunch\""
     assert html =~ "value=\"25.00\""

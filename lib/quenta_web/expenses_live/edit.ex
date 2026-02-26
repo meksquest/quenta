@@ -10,9 +10,7 @@ defmodule QuentaWeb.ExpensesLive.Edit do
     form = expense |> Expenses.change_expense(%{}) |> to_form()
     user_options = Users.list_users() |> Enum.map(fn user -> {user.name, user.id} end)
 
-    currency_options =
-      Currencies.list_currency_codes()
-      |> Enum.map(fn code -> {code, code} end)
+    currency_options = Currencies.list_currency_options()
 
     socket =
       socket

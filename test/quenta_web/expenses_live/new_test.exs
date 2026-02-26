@@ -17,6 +17,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
     assert render(view) =~ "Date"
     assert render(view) =~ "Currency"
     assert render(view) =~ "Paid By"
+    assert render(view) =~ "USD - United States Dollar"
   end
 
   test "creates a new expense", %{conn: conn, george: george} do
