@@ -101,4 +101,60 @@ defmodule Quenta.CurrenciesTest do
              ]
     end
   end
+
+  describe "last_used_currency_code_for_user/1" do
+    setup do
+      Repo.delete_all(Expense)
+      Repo.delete_all(Currency)
+
+      Repo.insert!(%Currency{code: "USD", name: "United States Dollar"})
+      Repo.insert!(%Currency{code: "EUR", name: "Euro"})
+      Repo.insert!(%Currency{code: "JPY", name: "Japanese Yen"})
+
+      :ok
+    end
+
+    test "returns nil when the user has no expenses" do
+      user = insert(:user)
+
+      assert Currencies.last_used_currency_code_for_user(user.id) == nil
+    end
+
+    test "returns the most recently used currency for the user" do
+      user = insert(:user)
+      other_user = insert(:user)
+
+      Repo.insert!(%Expense{
+        description: "Older EUR",
+        amount_cents: 100,
+        date: ~D[2024-01-01],
+        user_id: user.id,
+        currency_code: "EUR",
+        inserted_at: ~N[2024-01-01 10:00:00],
+        updated_at: ~N[2024-01-01 10:00:00]
+      })
+
+      Repo.insert!(%Expense{
+        description: "Recent USD",
+        amount_cents: 200,
+        date: ~D[2024-01-02],
+        user_id: user.id,
+        currency_code: "USD",
+        inserted_at: ~N[2024-01-02 12:00:00],
+        updated_at: ~N[2024-01-02 12:00:00]
+      })
+
+      Repo.insert!(%Expense{
+        description: "Other user JPY",
+        amount_cents: 300,
+        date: ~D[2024-01-03],
+        user_id: other_user.id,
+        currency_code: "JPY",
+        inserted_at: ~N[2024-01-03 12:00:00],
+        updated_at: ~N[2024-01-03 12:00:00]
+      })
+
+      assert Currencies.last_used_currency_code_for_user(user.id) == "USD"
+    end
+  end
 end

@@ -68,4 +68,17 @@ defmodule Quenta.Currencies do
         ]
     end
   end
+
+  @doc """
+  Returns the most recently used currency code for the user, or nil if none.
+  """
+  def last_used_currency_code_for_user(user_id) do
+    from(e in Expense,
+      where: e.user_id == ^user_id,
+      order_by: [desc: e.inserted_at],
+      select: e.currency_code,
+      limit: 1
+    )
+    |> Repo.one()
+  end
 end
