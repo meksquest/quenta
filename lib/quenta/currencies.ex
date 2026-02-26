@@ -7,16 +7,6 @@ defmodule Quenta.Currencies do
   alias Quenta.Repo
 
   @doc """
-  Returns a list of currency codes sorted alphabetically.
-  """
-  def list_currency_codes do
-    Currency
-    |> Repo.all()
-    |> Enum.map(& &1.code)
-    |> Enum.sort()
-  end
-
-  @doc """
   Returns a list of currency options formatted like "USD - United States Dollar".
   """
   def list_currency_options do
