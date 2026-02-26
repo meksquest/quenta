@@ -1,5 +1,8 @@
 # Commands
 
+## Agent Prompt Conventions
+See `AGENT_PROMPT.md` for agent guidelines and project conventions.
+
 ### Start Dev Shell
 
 ```shell
