@@ -328,6 +328,40 @@ defmodule QuentaWeb.UserLiveTest do
       refute updated_html =~ "No expenses yet"
     end
 
+    test "keeps expenses sorted by date after PubSub add", %{
+      conn: conn,
+      george: george,
+      meks: meks
+    } do
+      insert(:expense,
+        description: "Newer Expense",
+        amount_cents: 1000,
+        date: ~D[2023-10-02],
+        user: george
+      )
+
+      {:ok, view, _html} = live(conn, ~p"/users/#{meks.id}")
+
+      older_expense =
+        insert(:expense,
+          description: "Older Expense",
+          amount_cents: 900,
+          date: ~D[2023-10-01],
+          user: george
+        )
+
+      PubSub.broadcast_expense_added(older_expense)
+
+      updated_html = render(view)
+
+      assert updated_html =~ "Newer Expense"
+      assert updated_html =~ "Older Expense"
+
+      {newer_index, _} = :binary.match(updated_html, "Newer Expense")
+      {older_index, _} = :binary.match(updated_html, "Older Expense")
+      assert newer_index < older_index
+    end
+
     test "updates running total when new expense is added via PubSub", %{
       conn: conn,
       george: george,

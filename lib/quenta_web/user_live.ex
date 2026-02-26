@@ -52,9 +52,10 @@ defmodule QuentaWeb.UserLive do
     case Expenses.delete_expense(expense) do
       {:ok, _} ->
         updated_expenses = Enum.reject(expenses, &(&1.id == expense.id))
+        sorted_expenses = sort_expenses_by_date(updated_expenses)
 
         expenses_with_balances =
-          calculate_expenses_with_balances(updated_expenses, all_users, user.id)
+          calculate_expenses_with_balances(sorted_expenses, all_users, user.id)
 
         {:noreply,
          socket
@@ -75,9 +76,10 @@ defmodule QuentaWeb.UserLive do
     %{expenses: expenses, all_users: all_users, user: user} = socket.assigns
     preloaded_expense = Quenta.Repo.preload(expense, [:user, expense_items: [:user]])
     updated_expenses = [preloaded_expense | expenses]
+    sorted_expenses = sort_expenses_by_date(updated_expenses)
 
     expenses_with_balances =
-      calculate_expenses_with_balances(updated_expenses, all_users, user.id)
+      calculate_expenses_with_balances(sorted_expenses, all_users, user.id)
 
     socket =
       socket
@@ -99,8 +101,10 @@ defmodule QuentaWeb.UserLive do
         if existing.id == preloaded_expense.id, do: preloaded_expense, else: existing
       end)
 
+    sorted_expenses = sort_expenses_by_date(updated_expenses)
+
     expenses_with_balances =
-      calculate_expenses_with_balances(updated_expenses, all_users, user.id)
+      calculate_expenses_with_balances(sorted_expenses, all_users, user.id)
 
     socket =
       socket
@@ -116,9 +120,10 @@ defmodule QuentaWeb.UserLive do
   def handle_info({:expense_deleted, %Quenta.Expenses.Expense{} = expense}, socket) do
     %{expenses: expenses, all_users: all_users, user: user} = socket.assigns
     updated_expenses = Enum.reject(expenses, &(&1.id == expense.id))
+    sorted_expenses = sort_expenses_by_date(updated_expenses)
 
     expenses_with_balances =
-      calculate_expenses_with_balances(updated_expenses, all_users, user.id)
+      calculate_expenses_with_balances(sorted_expenses, all_users, user.id)
 
     socket =
       socket
@@ -134,6 +139,18 @@ defmodule QuentaWeb.UserLive do
   def handle_info({:expense_deleted, _}, socket), do: {:noreply, socket}
   def handle_info({:expense_updated, _}, socket), do: {:noreply, socket}
   def handle_info({:expense_added, _}, socket), do: {:noreply, socket}
+
+  defp sort_expenses_by_date(expenses) do
+    Enum.sort(expenses, fn left, right ->
+      with :eq <- Date.compare(left.date, right.date),
+           :eq <- NaiveDateTime.compare(left.inserted_at, right.inserted_at) do
+        left.id >= right.id
+      else
+        :gt -> true
+        :lt -> false
+      end
+    end)
+  end
 
   defp calculate_expenses_with_balances(expenses, all_users, current_user_id) do
     Enum.map(expenses, fn expense ->
