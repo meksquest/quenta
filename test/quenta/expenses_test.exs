@@ -1,5 +1,6 @@
 defmodule Quenta.ExpensesTest do
   use Quenta.DataCase, async: true
+  import Ecto.Query
   alias Quenta.Expenses
 
   describe "change_expense/2" do
@@ -166,6 +167,53 @@ defmodule Quenta.ExpensesTest do
     assert retrieved_expense.amount_cents == 500
     assert retrieved_expense.date == ~D[2023-10-02]
     assert retrieved_expense.id == expense.id
+  end
+
+  test "list_expenses/0 orders by date desc with stable tie-breakers" do
+    user = insert(:user)
+
+    expense_older = insert(:expense, date: ~D[2023-09-30], user: user)
+    expense_newer = insert(:expense, date: ~D[2023-10-02], user: user)
+    expense_same_date_early = insert(:expense, date: ~D[2023-10-01], user: user)
+    expense_same_date_late = insert(:expense, date: ~D[2023-10-01], user: user)
+    expense_same_date_same_time_low_id = insert(:expense, date: ~D[2023-10-01], user: user)
+    expense_same_date_same_time_high_id = insert(:expense, date: ~D[2023-10-01], user: user)
+
+    base_time = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+    early = NaiveDateTime.add(base_time, -60, :second)
+    same_time = NaiveDateTime.add(base_time, -30, :second)
+    late = NaiveDateTime.add(base_time, -10, :second)
+
+    Quenta.Repo.update_all(
+      from(e in Quenta.Expenses.Expense, where: e.id == ^expense_same_date_early.id),
+      set: [inserted_at: early]
+    )
+
+    Quenta.Repo.update_all(
+      from(e in Quenta.Expenses.Expense, where: e.id == ^expense_same_date_late.id),
+      set: [inserted_at: late]
+    )
+
+    Quenta.Repo.update_all(
+      from(e in Quenta.Expenses.Expense, where: e.id == ^expense_same_date_same_time_low_id.id),
+      set: [inserted_at: same_time]
+    )
+
+    Quenta.Repo.update_all(
+      from(e in Quenta.Expenses.Expense, where: e.id == ^expense_same_date_same_time_high_id.id),
+      set: [inserted_at: same_time]
+    )
+
+    ids = Expenses.list_expenses() |> Enum.map(& &1.id)
+
+    assert ids == [
+             expense_newer.id,
+             expense_same_date_late.id,
+             expense_same_date_same_time_high_id.id,
+             expense_same_date_same_time_low_id.id,
+             expense_same_date_early.id,
+             expense_older.id
+           ]
   end
 
   describe "get_expense!/2" do

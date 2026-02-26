@@ -3,6 +3,8 @@ defmodule Quenta.Expenses do
   alias Quenta.PubSub
   alias Quenta.Repo
 
+  import Ecto.Query, only: [from: 2]
+
   def change_expense(expense, attrs) do
     expense |> Expense.changeset(attrs)
   end
@@ -20,7 +22,11 @@ defmodule Quenta.Expenses do
 
   def list_expenses(opts \\ []) do
     preloads = Keyword.get(opts, :preloads, [])
-    Expense |> Repo.all() |> Repo.preload(preloads)
+
+    Expense
+    |> from(order_by: [desc: :date, desc: :inserted_at, desc: :id])
+    |> Repo.all()
+    |> Repo.preload(preloads)
   end
 
   def get_expense!(id, opts \\ []) do
