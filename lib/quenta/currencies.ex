@@ -15,4 +15,14 @@ defmodule Quenta.Currencies do
     |> Enum.map(& &1.code)
     |> Enum.sort()
   end
+
+  @doc """
+  Returns a list of currency options formatted like "USD - United States Dollar".
+  """
+  def list_currency_options do
+    Currency
+    |> Repo.all()
+    |> Enum.sort_by(& &1.code)
+    |> Enum.map(fn currency -> {"#{currency.code} - #{currency.name}", currency.code} end)
+  end
 end
