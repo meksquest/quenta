@@ -13,9 +13,9 @@ defmodule Quenta.CurrenciesTest do
     end
 
     test "returns sorted currency options with code and name" do
-      Repo.insert!(%Currency{code: "USD", name: "United States Dollar"})
-      Repo.insert!(%Currency{code: "EUR", name: "Euro"})
-      Repo.insert!(%Currency{code: "JPY", name: "Japanese Yen"})
+      create_currency(%{code: "USD", name: "United States Dollar"})
+      create_currency(%{code: "EUR", name: "Euro"})
+      create_currency(%{code: "JPY", name: "Japanese Yen"})
 
       assert Currencies.list_currency_options() == [
                {"EUR - Euro", "EUR"},
@@ -37,42 +37,30 @@ defmodule Quenta.CurrenciesTest do
     end
 
     test "orders most recently used currencies first for the user" do
-      Repo.insert!(%Currency{code: "USD", name: "United States Dollar"})
-      Repo.insert!(%Currency{code: "EUR", name: "Euro"})
-      Repo.insert!(%Currency{code: "JPY", name: "Japanese Yen"})
+      create_currency(%{code: "USD", name: "United States Dollar"})
+      create_currency(%{code: "EUR", name: "Euro"})
+      create_currency(%{code: "JPY", name: "Japanese Yen"})
 
       user = insert(:user)
       other_user = insert(:user)
 
-      Repo.insert!(%Expense{
-        description: "Older EUR",
-        amount_cents: 100,
-        date: ~D[2024-01-01],
-        user_id: user.id,
+      insert(:expense,
+        user: user,
         currency_code: "EUR",
-        inserted_at: ~N[2024-01-01 10:00:00],
-        updated_at: ~N[2024-01-01 10:00:00]
-      })
+        inserted_at: ~N[2024-01-01 10:00:00]
+      )
 
-      Repo.insert!(%Expense{
-        description: "Recent USD",
-        amount_cents: 200,
-        date: ~D[2024-01-02],
-        user_id: user.id,
+      insert(:expense,
+        user: user,
         currency_code: "USD",
-        inserted_at: ~N[2024-01-02 12:00:00],
-        updated_at: ~N[2024-01-02 12:00:00]
-      })
+        inserted_at: ~N[2024-01-02 12:00:00]
+      )
 
-      Repo.insert!(%Expense{
-        description: "Other user JPY",
-        amount_cents: 300,
-        date: ~D[2024-01-03],
-        user_id: other_user.id,
+      insert(:expense,
+        user: other_user,
         currency_code: "JPY",
-        inserted_at: ~N[2024-01-03 12:00:00],
-        updated_at: ~N[2024-01-03 12:00:00]
-      })
+        inserted_at: ~N[2024-01-03 12:00:00]
+      )
 
       assert Currencies.list_currency_options_for_user(user.id) == [
                {"Recently used",
@@ -88,9 +76,9 @@ defmodule Quenta.CurrenciesTest do
     end
 
     test "falls back to sorted list when the user has no expenses" do
-      Repo.insert!(%Currency{code: "USD", name: "United States Dollar"})
-      Repo.insert!(%Currency{code: "EUR", name: "Euro"})
-      Repo.insert!(%Currency{code: "JPY", name: "Japanese Yen"})
+      create_currency(%{code: "USD", name: "United States Dollar"})
+      create_currency(%{code: "EUR", name: "Euro"})
+      create_currency(%{code: "JPY", name: "Japanese Yen"})
 
       user = insert(:user)
 
@@ -107,9 +95,9 @@ defmodule Quenta.CurrenciesTest do
       Repo.delete_all(Expense)
       Repo.delete_all(Currency)
 
-      Repo.insert!(%Currency{code: "USD", name: "United States Dollar"})
-      Repo.insert!(%Currency{code: "EUR", name: "Euro"})
-      Repo.insert!(%Currency{code: "JPY", name: "Japanese Yen"})
+      create_currency(%{code: "USD", name: "United States Dollar"})
+      create_currency(%{code: "EUR", name: "Euro"})
+      create_currency(%{code: "JPY", name: "Japanese Yen"})
 
       :ok
     end
@@ -124,37 +112,29 @@ defmodule Quenta.CurrenciesTest do
       user = insert(:user)
       other_user = insert(:user)
 
-      Repo.insert!(%Expense{
-        description: "Older EUR",
-        amount_cents: 100,
-        date: ~D[2024-01-01],
-        user_id: user.id,
+      insert(:expense,
+        user: user,
         currency_code: "EUR",
-        inserted_at: ~N[2024-01-01 10:00:00],
-        updated_at: ~N[2024-01-01 10:00:00]
-      })
+        inserted_at: ~N[2024-01-01 10:00:00]
+      )
 
-      Repo.insert!(%Expense{
-        description: "Recent USD",
-        amount_cents: 200,
-        date: ~D[2024-01-02],
-        user_id: user.id,
+      insert(:expense,
+        user: user,
         currency_code: "USD",
-        inserted_at: ~N[2024-01-02 12:00:00],
-        updated_at: ~N[2024-01-02 12:00:00]
-      })
+        inserted_at: ~N[2024-01-02 12:00:00]
+      )
 
-      Repo.insert!(%Expense{
-        description: "Other user JPY",
-        amount_cents: 300,
-        date: ~D[2024-01-03],
-        user_id: other_user.id,
+      insert(:expense,
+        user: other_user,
         currency_code: "JPY",
-        inserted_at: ~N[2024-01-03 12:00:00],
-        updated_at: ~N[2024-01-03 12:00:00]
-      })
+        inserted_at: ~N[2024-01-03 12:00:00]
+      )
 
       assert Currencies.last_used_currency_code_for_user(user.id) == "USD"
     end
+  end
+
+  defp create_currency(attrs) do
+    insert(:currency, attrs)
   end
 end

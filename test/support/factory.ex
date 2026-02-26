@@ -25,4 +25,11 @@ defmodule Quenta.Factory do
       expense: build(:expense)
     }
   end
+
+  def currency_factory do
+    %Quenta.Currencies.Currency{
+      code: sequence(:currency_code, &"C#{&1}") |> String.pad_leading(3, "0"),
+      name: sequence(:currency_name, &"Currency #{&1}")
+    }
+  end
 end
