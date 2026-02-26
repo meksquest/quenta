@@ -7,7 +7,13 @@ defmodule QuentaWeb.ExpensesLive.New do
   alias Quenta.Currencies
 
   def mount(%{"user_id" => user_id}, _session, socket) do
-    form = %Expense{} |> Expenses.change_expense(%{}) |> to_form()
+    last_used_currency_code = Currencies.last_used_currency_code_for_user(user_id)
+
+    form =
+      %Expense{}
+      |> Expenses.change_expense(%{currency_code: last_used_currency_code})
+      |> to_form()
+
     user_options = Users.list_users() |> Enum.map(fn user -> {user.name, user.id} end)
 
     currency_options = Currencies.list_currency_options_for_user(user_id)

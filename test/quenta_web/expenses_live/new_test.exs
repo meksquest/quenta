@@ -24,6 +24,22 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
     assert render(view) =~ "USD - United States Dollar"
   end
 
+  test "defaults currency to the user's last used currency", %{conn: conn, george: george} do
+    insert(:expense, user: george, currency_code: "EUR", inserted_at: ~N[2024-01-01 10:00:00])
+    insert(:expense, user: george, currency_code: "USD", inserted_at: ~N[2024-01-02 10:00:00])
+
+    {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
+
+    html = render(view)
+
+    selected_option =
+      html
+      |> Floki.find("select[name=\"expense[currency_code]\"] option[selected]")
+      |> List.first()
+
+    assert Floki.attribute(selected_option, "value") == ["USD"]
+  end
+
   test "creates a new expense", %{conn: conn, george: george} do
     {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
 
