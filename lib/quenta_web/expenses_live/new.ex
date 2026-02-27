@@ -103,12 +103,11 @@ defmodule QuentaWeb.ExpensesLive.New do
                   >
                     Currency *
                   </label>
-                  <.input
-                    id={@form[:currency_code].id}
-                    name={@form[:currency_code].name}
-                    type="select"
+                  <.live_component
+                    module={QuentaWeb.CurrencySelectComponent}
+                    id={@form[:currency_code].id <> "-currency-select"}
+                    field={@form[:currency_code]}
                     options={@currency_options}
-                    value={@form[:currency_code].value}
                   />
                 </div>
 

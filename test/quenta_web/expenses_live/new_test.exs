@@ -32,12 +32,12 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
 
     html = render(view)
 
-    selected_option =
+    hidden_input =
       html
-      |> Floki.find("select[name=\"expense[currency_code]\"] option[selected]")
+      |> Floki.find("input[name=\"expense[currency_code]\"]")
       |> List.first()
 
-    assert Floki.attribute(selected_option, "value") == ["USD"]
+    assert Floki.attribute(hidden_input, "value") == ["USD"]
   end
 
   test "creates a new expense", %{conn: conn, george: george} do

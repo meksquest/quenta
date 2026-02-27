@@ -35,7 +35,13 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
     assert html =~ "value=\"Lunch\""
     assert html =~ "value=\"25.00\""
     assert html =~ "value=\"2023-10-01\""
-    assert html =~ "value=\"USD\""
+
+    hidden_input =
+      html
+      |> Floki.find("input[name=\"expense[currency_code]\"]")
+      |> List.first()
+
+    assert Floki.attribute(hidden_input, "value") == ["USD"]
   end
 
   test "updates an expense", %{conn: conn, george: george} do
