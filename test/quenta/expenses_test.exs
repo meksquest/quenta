@@ -131,8 +131,7 @@ defmodule Quenta.ExpensesTest do
 
       Quenta.PubSub.subscribe_to_expense_added()
       assert {:ok, %{id: created_expense_id}} = Expenses.create_expense(params)
-      assert_received {:expense_added, %{id: received_expense_id}}
-      assert created_expense_id == received_expense_id
+      assert_receive {:expense_added, %{id: ^created_expense_id}}
     end
 
     test "does not broadcas expense_added upon failure" do
