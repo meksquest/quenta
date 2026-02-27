@@ -143,6 +143,7 @@ defmodule QuentaWeb.CurrencySelectComponent do
         phx-focus="open"
         phx-click="open"
         phx-keyup="search"
+        phx-hook="SelectAllOnFocus"
         phx-keydown="keydown"
         role="combobox"
         aria-autocomplete="list"
