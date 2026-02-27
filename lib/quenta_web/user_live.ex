@@ -295,7 +295,7 @@ defmodule QuentaWeb.UserLive do
             <div class="rounded-lg border border-slate-700 bg-slate-800 text-slate-200 shadow-sm">
               <div class="p-4">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div class="flex items-center space-x-4">
+                  <div class="flex items-start space-x-4">
                     <div class="text-2xl flex-shrink-0">{get_expense_emoji(expense.description)}</div>
                     <div class="min-w-0 flex-1">
                       <h3 class="font-medium text-white truncate">{expense.description}</h3>
