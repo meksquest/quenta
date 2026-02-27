@@ -13,7 +13,7 @@ defmodule Quenta.Factory do
       date: ~D[2023-10-01],
       amount_cents: 1500,
       currency_code: "USD",
-      user: build(:user)
+      created_by_user: build(:user)
     }
   end
 

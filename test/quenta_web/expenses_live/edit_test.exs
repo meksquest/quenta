@@ -15,7 +15,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
         description: "Lunch",
         amount_cents: 2500,
         date: ~D[2023-10-01],
-        user: george
+        created_by_user: george
       )
 
     {:ok, view, _html} = live(conn, ~p"/users/#{george.id}/expenses/#{expense.id}/edit")
@@ -27,7 +27,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
     assert html =~ "Amount"
     assert html =~ "Date"
     assert html =~ "Currency"
-    assert html =~ "Paid By"
+    assert html =~ "Created By"
     assert html =~ "Recently used"
     assert html =~ "All currencies"
     assert html =~ "USD - United States Dollar"
@@ -50,7 +50,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
         description: "Old Expense",
         amount_cents: 1000,
         date: ~D[2023-10-01],
-        user: george
+        created_by_user: george
       )
 
     {:ok, view, _html} = live(conn, ~p"/users/#{george.id}/expenses/#{expense.id}/edit")
@@ -62,7 +62,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
         expense: %{
           amount_dollars: "42.00",
           description: "Updated Expense",
-          user_id: george.id,
+          created_by_user_id: george.id,
           date: "2023-10-02",
           currency_code: "EUR"
         }
@@ -85,7 +85,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
         description: "Old Expense",
         amount_cents: 1000,
         date: ~D[2023-10-01],
-        user: george
+        created_by_user: george
       )
 
     {:ok, view, _html} = live(conn, ~p"/users/#{george.id}/expenses/#{expense.id}/edit")
@@ -96,7 +96,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
       expense: %{
         amount_dollars: "",
         description: "",
-        user_id: "",
+        created_by_user_id: "",
         date: "",
         currency_code: ""
       }
@@ -111,7 +111,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
         description: "Dinner",
         amount_cents: 5000,
         date: ~D[2023-10-01],
-        user: george
+        created_by_user: george
       )
 
     item =
@@ -131,7 +131,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
         expense: %{
           amount_dollars: "100.00",
           description: "Updated Dinner",
-          user_id: george.id,
+          created_by_user_id: george.id,
           date: "2023-10-02",
           currency_code: "EUR",
           expense_items: %{
@@ -182,7 +182,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
         description: "Dinner",
         amount_cents: 5000,
         date: ~D[2023-10-01],
-        user: george
+        created_by_user: george
       )
 
     item =
@@ -201,7 +201,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
       expense: %{
         amount_dollars: "100.00",
         description: "Updated Dinner",
-        user_id: george.id,
+        created_by_user_id: george.id,
         date: "2023-10-02",
         currency_code: "",
         expense_items: %{

@@ -45,19 +45,19 @@ defmodule Quenta.CurrenciesTest do
       other_user = insert(:user)
 
       insert(:expense,
-        user: user,
+        created_by_user: user,
         currency_code: "EUR",
         inserted_at: ~N[2024-01-01 10:00:00]
       )
 
       insert(:expense,
-        user: user,
+        created_by_user: user,
         currency_code: "USD",
         inserted_at: ~N[2024-01-02 12:00:00]
       )
 
       insert(:expense,
-        user: other_user,
+        created_by_user: other_user,
         currency_code: "JPY",
         inserted_at: ~N[2024-01-03 12:00:00]
       )
@@ -113,19 +113,19 @@ defmodule Quenta.CurrenciesTest do
       other_user = insert(:user)
 
       insert(:expense,
-        user: user,
+        created_by_user: user,
         currency_code: "EUR",
         inserted_at: ~N[2024-01-01 10:00:00]
       )
 
       insert(:expense,
-        user: user,
+        created_by_user: user,
         currency_code: "USD",
         inserted_at: ~N[2024-01-02 12:00:00]
       )
 
       insert(:expense,
-        user: other_user,
+        created_by_user: other_user,
         currency_code: "JPY",
         inserted_at: ~N[2024-01-03 12:00:00]
       )

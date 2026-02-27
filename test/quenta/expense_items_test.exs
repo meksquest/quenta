@@ -5,7 +5,7 @@ defmodule Quenta.ExpenseItemsTest do
   test "create_expense_item/1 creates a new expense item" do
     user_1 = insert(:user)
     user_2 = insert(:user)
-    expense = insert(:expense, user: user_1)
+    expense = insert(:expense, created_by_user: user_1)
 
     params = %{
       "description" => "Giant Mug",
@@ -24,7 +24,7 @@ defmodule Quenta.ExpenseItemsTest do
   test "create_expense_item/1 returns an error when required fields are missing" do
     user_1 = insert(:user)
     user_2 = insert(:user)
-    expense = insert(:expense, user: user_1)
+    expense = insert(:expense, created_by_user: user_1)
 
     params = %{
       "description" => "Giant Mug",

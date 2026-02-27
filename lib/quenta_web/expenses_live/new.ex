@@ -147,17 +147,17 @@ defmodule QuentaWeb.ExpensesLive.New do
 
                 <div>
                   <label
-                    for={@form[:user_id].id}
+                    for={@form[:created_by_user_id].id}
                     class="block text-sm font-medium text-slate-200 mb-2"
                   >
-                    Paid By *
+                    Created By *
                   </label>
                   <.input
-                    id={@form[:user_id].id}
-                    name={@form[:user_id].name}
+                    id={@form[:created_by_user_id].id}
+                    name={@form[:created_by_user_id].name}
                     type="select"
                     options={@user_options}
-                    value={@form[:user_id].value || @user_id}
+                    value={@form[:created_by_user_id].value || @user_id}
                   />
                 </div>
               </div>
@@ -257,7 +257,7 @@ defmodule QuentaWeb.ExpensesLive.New do
                           type="select"
                           options={@user_options}
                           prompt="Select person…"
-                          value={@form[:user_id].value}
+                          value={@form[:created_by_user_id].value}
                         />
                       </div>
                     </div>

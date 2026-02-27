@@ -45,7 +45,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: "Edit Me",
           amount_cents: 1200,
           date: ~D[2023-10-02],
-          user: george
+          created_by_user: george
         )
 
       {:ok, view, _html} = live(conn, ~p"/users/#{meks.id}")
@@ -71,7 +71,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: "Coffee Shop",
           amount_cents: 1050,
           date: ~D[2023-10-02],
-          user: george
+          created_by_user: george
         )
 
       {:ok, view, html} = live(conn, ~p"/users/#{meks.id}")
@@ -80,7 +80,7 @@ defmodule QuentaWeb.UserLiveTest do
       assert html =~ "Coffee Shop"
       assert html =~ "USD $10.50"
       assert html =~ "Oct 2, 2023"
-      assert html =~ "Paid by George"
+      assert html =~ "Created by George"
 
       # Check emoji is displayed (coffee emoji for coffee-related expense)
       assert html =~ "☕"
@@ -100,7 +100,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: "Dinner",
         amount_cents: 2000,
         date: ~D[2023-10-02],
-        user: george
+        created_by_user: george
       )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
@@ -116,7 +116,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: "Groceries",
         amount_cents: 3000,
         date: ~D[2023-10-02],
-        user: meks
+        created_by_user: meks
       )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
@@ -136,7 +136,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: "Dinner",
         amount_cents: 2000,
         date: ~D[2023-10-01],
-        user: george
+        created_by_user: george
       )
 
       # Meks pays $30 (George owes $15)
@@ -144,7 +144,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: "Groceries",
         amount_cents: 3000,
         date: ~D[2023-10-02],
-        user: meks
+        created_by_user: meks
       )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
@@ -162,7 +162,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: "Dinner USD",
         amount_cents: 2000,
         date: ~D[2023-10-01],
-        user: george,
+        created_by_user: george,
         currency_code: "USD"
       )
 
@@ -170,7 +170,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: "Groceries NZD",
         amount_cents: 3000,
         date: ~D[2023-10-02],
-        user: meks,
+        created_by_user: meks,
         currency_code: "NZD"
       )
 
@@ -187,7 +187,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: "Restaurant Bill",
           amount_cents: 5000,
           date: ~D[2023-10-02],
-          user: george
+          created_by_user: george
         )
 
       insert(:expense_item,
@@ -233,7 +233,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: description,
           amount_cents: 1000,
           date: ~D[2023-10-02],
-          user: george
+          created_by_user: george
         )
       end
 
@@ -250,7 +250,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: "Personal Bill",
           amount_cents: 2000,
           date: ~D[2023-10-02],
-          user: meks
+          created_by_user: meks
         )
 
       insert(:expense_item,
@@ -278,7 +278,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: "Deletable Expense",
           amount_cents: 1200,
           date: ~D[2023-10-02],
-          user: george
+          created_by_user: george
         )
 
       {:ok, view, html} = live(conn, ~p"/users/#{meks.id}")
@@ -312,7 +312,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: "New Coffee",
           amount_cents: 500,
           date: ~D[2023-10-02],
-          user: george
+          created_by_user: george
         )
 
       # Manually trigger the PubSub message to simulate real behavior
@@ -337,7 +337,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: "Newer Expense",
         amount_cents: 1000,
         date: ~D[2023-10-02],
-        user: george
+        created_by_user: george
       )
 
       {:ok, view, _html} = live(conn, ~p"/users/#{meks.id}")
@@ -347,7 +347,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: "Older Expense",
           amount_cents: 900,
           date: ~D[2023-10-01],
-          user: george
+          created_by_user: george
         )
 
       PubSub.broadcast_expense_added(older_expense)
@@ -372,7 +372,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: "Initial Expense",
         amount_cents: 1000,
         date: ~D[2023-10-01],
-        user: george
+        created_by_user: george
       )
 
       {:ok, view, html} = live(conn, ~p"/users/#{meks.id}")
@@ -386,7 +386,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: "Second Expense",
           amount_cents: 2000,
           date: ~D[2023-10-02],
-          user: george
+          created_by_user: george
         )
 
       # Manually trigger the PubSub message to simulate real behavior
@@ -409,7 +409,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: "Test Expense",
           amount_cents: 1500,
           date: ~D[2023-10-02],
-          user: george
+          created_by_user: george
         )
 
       # Broadcast the expense_added event
@@ -431,7 +431,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: "Old Name",
           amount_cents: 1200,
           date: ~D[2023-10-03],
-          user: george
+          created_by_user: george
         )
 
       {:ok, view, html} = live(conn, ~p"/users/#{meks.id}")
@@ -446,7 +446,7 @@ defmodule QuentaWeb.UserLiveTest do
             description: "Updated Name",
             amount_cents: 4500,
             date: ~D[2023-10-04],
-            user_id: george.id
+            created_by_user_id: george.id
           ]
         )
 
@@ -471,7 +471,7 @@ defmodule QuentaWeb.UserLiveTest do
           description: "Deleted Expense",
           amount_cents: 800,
           date: ~D[2023-10-03],
-          user: george
+          created_by_user: george
         )
 
       {:ok, view, html} = live(conn, ~p"/users/#{meks.id}")
@@ -502,7 +502,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: nil,
         amount_dollars: nil,
         date: nil,
-        user_id: george.id
+        created_by_user_id: george.id
       }
 
       # This should not crash the LiveView
@@ -520,7 +520,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: "Date Test",
         amount_cents: 1000,
         date: ~D[2023-12-25],
-        user: george
+        created_by_user: george
       )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
@@ -533,7 +533,7 @@ defmodule QuentaWeb.UserLiveTest do
         description: "Currency Test",
         amount_cents: 12345,
         date: ~D[2023-10-02],
-        user: george
+        created_by_user: george
       )
 
       {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")

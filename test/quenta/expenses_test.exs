@@ -10,7 +10,7 @@ defmodule Quenta.ExpensesTest do
         description: "Test Expense",
         amount_dollars: 10.00,
         date: ~D[2023-10-01],
-        user_id: 1
+        created_by_user_id: 1
       }
 
       changeset = Expenses.change_expense(expense, %{"description" => "Updated Expense"})
@@ -24,7 +24,7 @@ defmodule Quenta.ExpensesTest do
         description: "Test Expense",
         amount_dollars: 10.00,
         date: ~D[2023-10-01],
-        user_id: 1
+        created_by_user_id: 1
       }
 
       changeset = Expenses.change_expense(expense, %{"description" => nil})
@@ -41,14 +41,14 @@ defmodule Quenta.ExpensesTest do
         "description" => "Lunch",
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
-        "user_id" => user.id
+        "created_by_user_id" => user.id
       }
 
       assert {:ok, expense} = Expenses.create_expense(params)
       assert expense.description == "Lunch"
       assert expense.amount_cents == 1500
       assert expense.date == ~D[2023-10-01]
-      assert expense.user_id == user.id
+      assert expense.created_by_user_id == user.id
     end
 
     test "defaults currency_code to USD when missing" do
@@ -58,7 +58,7 @@ defmodule Quenta.ExpensesTest do
         "description" => "Lunch",
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
-        "user_id" => user.id
+        "created_by_user_id" => user.id
       }
 
       assert {:ok, expense} = Expenses.create_expense(params)
@@ -74,7 +74,7 @@ defmodule Quenta.ExpensesTest do
         "description" => "Lunch",
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
-        "user_id" => user_1.id,
+        "created_by_user_id" => user_1.id,
         "expense_items" => [
           %{
             description: "Item 1",
@@ -103,7 +103,7 @@ defmodule Quenta.ExpensesTest do
         # Missing amount_cents
         "amount_cents" => nil,
         "date" => ~D[2023-10-01],
-        "user_id" => user.id
+        "created_by_user_id" => user.id
       }
 
       assert {:error, changeset} = Expenses.create_expense(params)
@@ -119,7 +119,7 @@ defmodule Quenta.ExpensesTest do
         "description" => "Lunch",
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
-        "user_id" => user_1.id,
+        "created_by_user_id" => user_1.id,
         "expense_items" => [
           %{
             description: "Item 1",
@@ -142,7 +142,7 @@ defmodule Quenta.ExpensesTest do
         # Missing amount_cents
         "amount_cents" => nil,
         "date" => ~D[2023-10-01],
-        "user_id" => user.id
+        "created_by_user_id" => user.id
       }
 
       Quenta.PubSub.subscribe_to_expense_added()
@@ -159,7 +159,12 @@ defmodule Quenta.ExpensesTest do
     user = insert(:user)
 
     expense =
-      insert(:expense, description: "Coffee", amount_cents: 500, date: ~D[2023-10-02], user: user)
+      insert(:expense,
+        description: "Coffee",
+        amount_cents: 500,
+        date: ~D[2023-10-02],
+        created_by_user: user
+      )
 
     assert [retrieved_expense] = Expenses.list_expenses()
     assert retrieved_expense.description == "Coffee"
@@ -171,12 +176,16 @@ defmodule Quenta.ExpensesTest do
   test "list_expenses/0 orders by date desc with stable tie-breakers" do
     user = insert(:user)
 
-    expense_older = insert(:expense, date: ~D[2023-09-30], user: user)
-    expense_newer = insert(:expense, date: ~D[2023-10-02], user: user)
-    expense_same_date_early = insert(:expense, date: ~D[2023-10-01], user: user)
-    expense_same_date_late = insert(:expense, date: ~D[2023-10-01], user: user)
-    expense_same_date_same_time_low_id = insert(:expense, date: ~D[2023-10-01], user: user)
-    expense_same_date_same_time_high_id = insert(:expense, date: ~D[2023-10-01], user: user)
+    expense_older = insert(:expense, date: ~D[2023-09-30], created_by_user: user)
+    expense_newer = insert(:expense, date: ~D[2023-10-02], created_by_user: user)
+    expense_same_date_early = insert(:expense, date: ~D[2023-10-01], created_by_user: user)
+    expense_same_date_late = insert(:expense, date: ~D[2023-10-01], created_by_user: user)
+
+    expense_same_date_same_time_low_id =
+      insert(:expense, date: ~D[2023-10-01], created_by_user: user)
+
+    expense_same_date_same_time_high_id =
+      insert(:expense, date: ~D[2023-10-01], created_by_user: user)
 
     base_time = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
     early = NaiveDateTime.add(base_time, -60, :second)
@@ -224,7 +233,7 @@ defmodule Quenta.ExpensesTest do
           description: "Taxi",
           amount_cents: 2200,
           date: ~D[2023-10-03],
-          user: user
+          created_by_user: user
         )
 
       retrieved = Expenses.get_expense!(expense.id)
@@ -233,7 +242,7 @@ defmodule Quenta.ExpensesTest do
       assert retrieved.description == "Taxi"
       assert retrieved.amount_cents == 2200
       assert retrieved.date == ~D[2023-10-03]
-      assert retrieved.user_id == user.id
+      assert retrieved.created_by_user_id == user.id
     end
 
     test "raises when the expense is not found" do
@@ -246,7 +255,7 @@ defmodule Quenta.ExpensesTest do
   describe "get_expense_for_edit!/1" do
     test "hydrates amount_dollars for expense and items" do
       user = insert(:user)
-      expense = insert(:expense, user: user, amount_cents: 1234)
+      expense = insert(:expense, created_by_user: user, amount_cents: 1234)
       _item = insert(:expense_item, expense: expense, user: user, amount_cents: 567)
 
       expense = Expenses.get_expense_for_edit!(expense.id)
@@ -260,7 +269,7 @@ defmodule Quenta.ExpensesTest do
 
     test "preserves trailing zeros for whole-dollar amounts" do
       user = insert(:user)
-      expense = insert(:expense, user: user, amount_cents: 2500)
+      expense = insert(:expense, created_by_user: user, amount_cents: 2500)
       _item = insert(:expense_item, expense: expense, user: user, amount_cents: 3000)
 
       expense = Expenses.get_expense_for_edit!(expense.id)
@@ -277,7 +286,7 @@ defmodule Quenta.ExpensesTest do
 
       expense =
         insert(:expense,
-          user: user,
+          created_by_user: user,
           description: "Old",
           amount_cents: 1000,
           date: ~D[2023-10-01],
@@ -288,7 +297,7 @@ defmodule Quenta.ExpensesTest do
         "description" => "Old",
         "amount_dollars" => 10.00,
         "date" => ~D[2023-10-01],
-        "user_id" => user.id,
+        "created_by_user_id" => user.id,
         "currency_code" => nil
       }
 
@@ -302,7 +311,7 @@ defmodule Quenta.ExpensesTest do
 
       expense =
         insert(:expense,
-          user: user,
+          created_by_user: user,
           description: "Old",
           amount_cents: 1000,
           date: ~D[2023-10-01]
@@ -320,7 +329,7 @@ defmodule Quenta.ExpensesTest do
         "description" => "New",
         "amount_dollars" => 20.00,
         "date" => ~D[2023-10-02],
-        "user_id" => user.id,
+        "created_by_user_id" => user.id,
         "expense_items" => [
           %{
             "id" => item.id,
@@ -360,7 +369,7 @@ defmodule Quenta.ExpensesTest do
 
       expense =
         insert(:expense,
-          user: user,
+          created_by_user: user,
           description: "Old",
           amount_cents: 1000,
           date: ~D[2023-10-01]
@@ -386,7 +395,7 @@ defmodule Quenta.ExpensesTest do
         "description" => "Updated",
         "amount_dollars" => 10.00,
         "date" => ~D[2023-10-02],
-        "user_id" => user.id,
+        "created_by_user_id" => user.id,
         "expense_items_sort" => ["0", "1"],
         "expense_items_drop" => ["1"],
         "expense_items" => %{
@@ -418,7 +427,7 @@ defmodule Quenta.ExpensesTest do
 
       expense =
         insert(:expense,
-          user: user,
+          created_by_user: user,
           description: "Old",
           amount_cents: 1000,
           date: ~D[2023-10-01]
@@ -428,7 +437,7 @@ defmodule Quenta.ExpensesTest do
         "description" => "New",
         "amount_dollars" => 12.50,
         "date" => ~D[2023-10-02],
-        "user_id" => user.id
+        "created_by_user_id" => user.id
       }
 
       Quenta.PubSub.subscribe_to_expense_updated()
@@ -441,7 +450,7 @@ defmodule Quenta.ExpensesTest do
 
       expense =
         insert(:expense,
-          user: user,
+          created_by_user: user,
           description: "Old",
           amount_cents: 1000,
           date: ~D[2023-10-01]
@@ -451,7 +460,7 @@ defmodule Quenta.ExpensesTest do
         "description" => "",
         "amount_dollars" => nil,
         "date" => nil,
-        "user_id" => nil
+        "created_by_user_id" => nil
       }
 
       Quenta.PubSub.subscribe_to_expense_updated()
@@ -463,7 +472,7 @@ defmodule Quenta.ExpensesTest do
   describe "delete_expense/1" do
     test "deletes the expense and its expense items" do
       user = insert(:user)
-      expense = insert(:expense, user: user)
+      expense = insert(:expense, created_by_user: user)
 
       expense_item =
         insert(:expense_item,
@@ -478,7 +487,7 @@ defmodule Quenta.ExpensesTest do
 
     test "broadcasts expense_deleted upon success" do
       user = insert(:user)
-      expense = insert(:expense, user: user)
+      expense = insert(:expense, created_by_user: user)
 
       Quenta.PubSub.subscribe_to_expense_deleted()
       assert {:ok, %{id: deleted_expense_id}} = Expenses.delete_expense(expense)

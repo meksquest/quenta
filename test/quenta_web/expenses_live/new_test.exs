@@ -10,7 +10,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
   end
 
   test "renders new expense form", %{conn: conn, george: george} do
-    insert(:expense, user: george, currency_code: "USD")
+    insert(:expense, created_by_user: george, currency_code: "USD")
 
     {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
 
@@ -18,15 +18,24 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
     assert render(view) =~ "Amount"
     assert render(view) =~ "Date"
     assert render(view) =~ "Currency"
-    assert render(view) =~ "Paid By"
+    assert render(view) =~ "Created By"
     assert render(view) =~ "Recently used"
     assert render(view) =~ "All currencies"
     assert render(view) =~ "USD - United States Dollar"
   end
 
   test "defaults currency to the user's last used currency", %{conn: conn, george: george} do
-    insert(:expense, user: george, currency_code: "EUR", inserted_at: ~N[2024-01-01 10:00:00])
-    insert(:expense, user: george, currency_code: "USD", inserted_at: ~N[2024-01-02 10:00:00])
+    insert(:expense,
+      created_by_user: george,
+      currency_code: "EUR",
+      inserted_at: ~N[2024-01-01 10:00:00]
+    )
+
+    insert(:expense,
+      created_by_user: george,
+      currency_code: "USD",
+      inserted_at: ~N[2024-01-02 10:00:00]
+    )
 
     {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
 
@@ -49,7 +58,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
       expense: %{
         amount_dollars: "100.00",
         description: "Test Expense",
-        user_id: george.id,
+        created_by_user_id: george.id,
         date: "2023-10-01",
         currency_code: "USD"
       }
@@ -67,7 +76,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
       expense: %{
         amount_cents: "",
         description: "",
-        user_id: "",
+        created_by_user_id: "",
         date: "",
         currency_code: ""
       }
@@ -86,7 +95,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
       expense: %{
         amount_dollars: "100.00",
         description: "Test Expense",
-        user_id: george.id,
+        created_by_user_id: george.id,
         date: "2023-10-01",
         currency_code: "USD",
         expense_items: %{
@@ -116,7 +125,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
       expense: %{
         amount_cents: "100.00",
         description: "Test Expense",
-        user_id: george.id,
+        created_by_user_id: george.id,
         date: "2023-10-01",
         currency_code: "",
         expense_items: %{

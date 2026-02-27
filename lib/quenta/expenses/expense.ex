@@ -8,9 +8,14 @@ defmodule Quenta.Expenses.Expense do
     field :amount_cents, :integer
     field :amount_dollars, :decimal, virtual: true
 
-    belongs_to :user, Quenta.Users.User
+    belongs_to :created_by_user, Quenta.Users.User, foreign_key: :created_by_user_id
 
     has_many :expense_items, Quenta.ExpenseItems.ExpenseItem, on_replace: :delete
+
+    has_many :expense_participants, Quenta.ExpenseParticipants.ExpenseParticipant,
+      on_replace: :delete
+
+    has_many :expense_payments, Quenta.ExpensePayments.ExpensePayment, on_replace: :delete
 
     belongs_to :currency, Quenta.Currencies.Currency,
       foreign_key: :currency_code,
@@ -20,7 +25,7 @@ defmodule Quenta.Expenses.Expense do
     timestamps()
   end
 
-  @fields ~w(description date amount_dollars currency_code user_id)a
+  @fields ~w(description date amount_dollars currency_code created_by_user_id)a
 
   def changeset(expense, attrs) do
     expense
@@ -33,7 +38,7 @@ defmodule Quenta.Expenses.Expense do
     |> validate_required(@fields)
     |> validate_number(:amount_dollars, greater_than: 0, less_than_or_equal_to: 21_474_836)
     |> convert_dollars_to_cents()
-    |> assoc_constraint(:user)
+    |> assoc_constraint(:created_by_user)
   end
 
   defp put_default_currency(changeset) do

@@ -19,7 +19,7 @@ defmodule Quenta.ExpenseCalculatorTest do
 
     test "calculates balances for your supper example", %{users_two: users} do
       # Meks pays $30, has $2 water, George has $5 beer + $3 ice cream
-      expense = %{amount_cents: 3000, user_id: 1}
+      expense = %{amount_cents: 3000, created_by_user_id: 1}
 
       expense_items = [
         # Meks water
@@ -44,7 +44,7 @@ defmodule Quenta.ExpenseCalculatorTest do
     end
 
     test "handles case where everyone pays equally", %{users_two: users} do
-      expense = %{amount_cents: 2000, user_id: 1}
+      expense = %{amount_cents: 2000, created_by_user_id: 1}
       expense_items = []
 
       result = ExpenseCalculator.calculate_balances(expense, expense_items, users)
@@ -59,7 +59,7 @@ defmodule Quenta.ExpenseCalculatorTest do
     end
 
     test "handles case where non-payer has no personal items", %{users_two: users} do
-      expense = %{amount_cents: 1000, user_id: 1}
+      expense = %{amount_cents: 1000, created_by_user_id: 1}
 
       expense_items = [
         # Only Meks has personal items
@@ -80,7 +80,7 @@ defmodule Quenta.ExpenseCalculatorTest do
 
     test "handles three people scenario", %{users_three: users} do
       # Meks pays $30
-      expense = %{amount_cents: 3000, user_id: 1}
+      expense = %{amount_cents: 3000, created_by_user_id: 1}
 
       expense_items = [
         # Meks $5
@@ -110,7 +110,7 @@ defmodule Quenta.ExpenseCalculatorTest do
     end
 
     test "handles case where personal items equal total expense", %{users_two: users} do
-      expense = %{amount_cents: 1000, user_id: 1}
+      expense = %{amount_cents: 1000, created_by_user_id: 1}
 
       expense_items = [
         %{amount_cents: 600, user_id: 1},
@@ -131,7 +131,7 @@ defmodule Quenta.ExpenseCalculatorTest do
 
     test "handles case where different person pays", %{users_two: users} do
       # George pays
-      expense = %{amount_cents: 2000, user_id: 2}
+      expense = %{amount_cents: 2000, created_by_user_id: 2}
 
       expense_items = [
         # Meks $3
@@ -153,7 +153,7 @@ defmodule Quenta.ExpenseCalculatorTest do
     end
 
     test "balances always sum to zero", %{users_three: users} do
-      expense = %{amount_cents: 5000, user_id: 2}
+      expense = %{amount_cents: 5000, created_by_user_id: 2}
 
       expense_items = [
         %{amount_cents: 1000, user_id: 1},
@@ -168,7 +168,7 @@ defmodule Quenta.ExpenseCalculatorTest do
     end
 
     test "handles empty expense items list", %{users_two: users} do
-      expense = %{amount_cents: 1000, user_id: 1}
+      expense = %{amount_cents: 1000, created_by_user_id: 1}
       expense_items = []
 
       result = ExpenseCalculator.calculate_balances(expense, expense_items, users)
@@ -184,7 +184,7 @@ defmodule Quenta.ExpenseCalculatorTest do
     end
 
     test "handles single user scenario", %{meks: meks} do
-      expense = %{amount_cents: 1000, user_id: 1}
+      expense = %{amount_cents: 1000, created_by_user_id: 1}
       expense_items = [%{amount_cents: 1000, user_id: 1}]
 
       result = ExpenseCalculator.calculate_balances(expense, expense_items, [meks])

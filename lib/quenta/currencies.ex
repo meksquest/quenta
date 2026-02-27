@@ -25,7 +25,7 @@ defmodule Quenta.Currencies do
   def list_currency_options_for_user(user_id) do
     recent_currency_codes =
       from(e in Expense,
-        where: e.user_id == ^user_id,
+        where: e.created_by_user_id == ^user_id,
         group_by: e.currency_code,
         order_by: [desc: max(e.inserted_at)],
         select: e.currency_code
@@ -74,7 +74,7 @@ defmodule Quenta.Currencies do
   """
   def last_used_currency_code_for_user(user_id) do
     from(e in Expense,
-      where: e.user_id == ^user_id,
+      where: e.created_by_user_id == ^user_id,
       order_by: [desc: e.inserted_at],
       select: e.currency_code,
       limit: 1

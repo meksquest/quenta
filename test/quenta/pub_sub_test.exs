@@ -117,7 +117,7 @@ defmodule Quenta.PubSubTest do
         description: "Lunch",
         amount_dollars: 12.99,
         date: ~D[2023-10-15],
-        user_id: 1
+        created_by_user_id: 1
       }
 
       assert :ok = PubSub.broadcast_expense_added(expense)
@@ -210,7 +210,7 @@ defmodule Quenta.PubSubTest do
         description: "Updated Lunch",
         amount_dollars: 12.99,
         date: ~D[2023-10-15],
-        user_id: 1
+        created_by_user_id: 1
       }
 
       assert :ok = PubSub.broadcast_expense_updated(expense)
@@ -288,7 +288,7 @@ defmodule Quenta.PubSubTest do
         description: "Removed Lunch",
         amount_dollars: 12.99,
         date: ~D[2023-10-15],
-        user_id: 1
+        created_by_user_id: 1
       }
 
       assert :ok = PubSub.broadcast_expense_deleted(expense)

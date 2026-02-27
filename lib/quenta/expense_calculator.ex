@@ -30,7 +30,7 @@ defmodule Quenta.ExpenseCalculator do
         |> Enum.map(& &1.amount_cents)
         |> Enum.sum()
 
-      amount_paid = if user.id == expense.user_id, do: total_amount, else: 0
+      amount_paid = if user.id == expense.created_by_user_id, do: total_amount, else: 0
 
       # Distribute remainder to first N users (where N = remainder)
       extra_cent = if index < remainder, do: 1, else: 0

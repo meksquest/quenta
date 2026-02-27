@@ -14,8 +14,8 @@ defmodule QuentaWeb.UserLive do
     PubSub.subscribe_to_expense_updated()
     PubSub.subscribe_to_expense_deleted()
     user = Users.get_user!(user_id)
-    # Preload both user and expense_items with their associated users
-    expenses = Expenses.list_expenses(preloads: [:user, expense_items: [:user]])
+    # Preload both created_by_user and expense_items with their associated users
+    expenses = Expenses.list_expenses(preloads: [:created_by_user, expense_items: [:user]])
 
     # Get all users for calculations
     all_users = Users.list_users()
@@ -74,7 +74,7 @@ defmodule QuentaWeb.UserLive do
   @impl Phoenix.LiveView
   def handle_info({:expense_added, %Quenta.Expenses.Expense{} = expense}, socket) do
     %{expenses: expenses, all_users: all_users, user: user} = socket.assigns
-    preloaded_expense = Quenta.Repo.preload(expense, [:user, expense_items: [:user]])
+    preloaded_expense = Quenta.Repo.preload(expense, [:created_by_user, expense_items: [:user]])
     updated_expenses = [preloaded_expense | expenses]
     sorted_expenses = sort_expenses_by_date(updated_expenses)
 
@@ -94,7 +94,7 @@ defmodule QuentaWeb.UserLive do
 
   def handle_info({:expense_updated, %Quenta.Expenses.Expense{} = expense}, socket) do
     %{expenses: expenses, all_users: all_users, user: user} = socket.assigns
-    preloaded_expense = Quenta.Repo.preload(expense, [:user, expense_items: [:user]])
+    preloaded_expense = Quenta.Repo.preload(expense, [:created_by_user, expense_items: [:user]])
 
     updated_expenses =
       Enum.map(expenses, fn existing ->
@@ -307,7 +307,7 @@ defmodule QuentaWeb.UserLive do
                       {format_amount_with_currency(expense, expense.amount_cents)}
                     </div>
                     <div class="text-sm text-slate-300 capitalize">
-                      Paid by {expense.user.name}
+                      Created by {expense.created_by_user.name}
                     </div>
                     <div class="text-sm mt-1">
                       <% {label, amount, color_class} = format_expense_balance(expense) %>
