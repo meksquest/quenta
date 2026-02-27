@@ -294,29 +294,15 @@ defmodule QuentaWeb.UserLive do
           <%= for expense <- @expenses do %>
             <div class="rounded-lg border border-slate-700 bg-slate-800 text-slate-200 shadow-sm">
               <div class="p-4">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div class="flex items-start space-x-4">
+                <div class="flex items-start justify-between gap-4">
+                  <div class="flex items-start space-x-4 min-w-0">
                     <div class="text-2xl flex-shrink-0">{get_expense_emoji(expense.description)}</div>
                     <div class="min-w-0 flex-1">
                       <h3 class="font-medium text-white truncate">{expense.description}</h3>
                       <p class="text-sm text-slate-300">{format_date(expense.date)}</p>
-                      
-    <!-- Show expense items if any -->
-                      <%= if length(expense.expense_items) > 0 do %>
-                        <div class="mt-2 space-y-1">
-                          <%= for item <- expense.expense_items do %>
-                            <div class="text-xs text-slate-400 flex justify-between">
-                              <span>{item.description} ({item.user.name})</span>
-                              <span>
-                                {format_amount_with_currency(expense, item.amount_cents)}
-                              </span>
-                            </div>
-                          <% end %>
-                        </div>
-                      <% end %>
                     </div>
                   </div>
-                  <div class="text-right sm:flex-shrink-0">
+                  <div class="text-right flex-shrink-0">
                     <div class="font-semibold text-white">
                       {format_amount_with_currency(expense, expense.amount_cents)}
                     </div>
@@ -329,24 +315,39 @@ defmodule QuentaWeb.UserLive do
                         {label} {amount}
                       </span>
                     </div>
-                    <div class="mt-3 flex items-center gap-3">
-                      <.link
-                        navigate={~p"/users/#{@user.id}/expenses/#{expense.id}/edit"}
-                        class="text-xs text-blue-300 hover:text-blue-200"
-                      >
-                        Edit
-                      </.link>
-                      <button
-                        type="button"
-                        phx-click="delete_expense"
-                        phx-value-id={expense.id}
-                        data-confirm="Delete this expense?"
-                        class="text-xs text-red-300 hover:text-red-200"
-                      >
-                        Delete
-                      </button>
-                    </div>
                   </div>
+                </div>
+                
+    <!-- Show expense items if any -->
+                <%= if length(expense.expense_items) > 0 do %>
+                  <div class="mt-3 space-y-1 pl-10">
+                    <%= for item <- expense.expense_items do %>
+                      <div class="text-xs text-slate-400 flex justify-between">
+                        <span>{item.description} ({item.user.name})</span>
+                        <span>
+                          {format_amount_with_currency(expense, item.amount_cents)}
+                        </span>
+                      </div>
+                    <% end %>
+                  </div>
+                <% end %>
+
+                <div class="mt-3 flex items-center gap-3 pl-10">
+                  <.link
+                    navigate={~p"/users/#{@user.id}/expenses/#{expense.id}/edit"}
+                    class="text-xs text-blue-300 hover:text-blue-200"
+                  >
+                    Edit
+                  </.link>
+                  <button
+                    type="button"
+                    phx-click="delete_expense"
+                    phx-value-id={expense.id}
+                    data-confirm="Delete this expense?"
+                    class="text-xs text-red-300 hover:text-red-200"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
