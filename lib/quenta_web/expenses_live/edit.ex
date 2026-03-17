@@ -143,18 +143,11 @@ defmodule QuentaWeb.ExpensesLive.Edit do
                 </div>
 
                 <div>
-                  <label
-                    for={@form[:created_by_user_id].id}
-                    class="block text-sm font-medium text-slate-200 mb-2"
-                  >
-                    Created By *
-                  </label>
-                  <.input
+                  <input
                     id={@form[:created_by_user_id].id}
                     name={@form[:created_by_user_id].name}
-                    type="select"
-                    options={@user_options}
-                    value={@form[:created_by_user_id].value || @user_id}
+                    type="hidden"
+                    value={@user_id}
                   />
                 </div>
               </div>

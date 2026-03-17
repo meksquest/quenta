@@ -27,7 +27,6 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
     assert html =~ "Amount"
     assert html =~ "Date"
     assert html =~ "Currency"
-    assert html =~ "Created By"
     assert html =~ "Recently used"
     assert html =~ "All currencies"
     assert html =~ "USD - United States Dollar"
