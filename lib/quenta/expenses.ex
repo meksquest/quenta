@@ -35,7 +35,9 @@ defmodule Quenta.Expenses do
   end
 
   def get_expense_for_edit!(id) do
-    expense = get_expense!(id, preloads: [:expense_items])
+    expense =
+      get_expense!(id, preloads: [:expense_items, :expense_participants, :expense_payments])
+
     hydrate_amount_dollars(expense)
   end
 
@@ -47,7 +49,33 @@ defmodule Quenta.Expenses do
         %{item | amount_dollars: cents_to_dollars(item.amount_cents)}
       end)
 
-    %{expense | amount_dollars: amount_dollars, expense_items: expense_items}
+    expense_participants =
+      Enum.map(expense.expense_participants, fn participant ->
+        %{participant | share_dollars: cents_to_dollars(participant.share_cents)}
+      end)
+
+    expense_payments =
+      Enum.map(expense.expense_payments, fn payment ->
+        %{payment | amount_dollars: cents_to_dollars(payment.amount_cents)}
+      end)
+
+    participants_user_ids = Enum.map(expense_participants, & &1.user_id)
+
+    paid_by_user_id =
+      case expense_payments do
+        [payment | _] -> payment.user_id
+        _ -> nil
+      end
+
+    %{
+      expense
+      | amount_dollars: amount_dollars,
+        expense_items: expense_items,
+        expense_participants: expense_participants,
+        expense_payments: expense_payments,
+        participants_user_ids: participants_user_ids,
+        paid_by_user_id: paid_by_user_id
+    }
   end
 
   defp cents_to_dollars(nil), do: nil
@@ -61,7 +89,7 @@ defmodule Quenta.Expenses do
 
   def update_expense(%Expense{} = expense, attrs) do
     expense
-    |> Repo.preload(:expense_items)
+    |> Repo.preload([:expense_items, :expense_participants, :expense_payments])
     |> Expense.changeset(attrs)
     |> Repo.update()
     |> case do

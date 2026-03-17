@@ -64,7 +64,9 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
           description: "Updated Expense",
           created_by_user_id: george.id,
           date: "2023-10-02",
-          currency_code: "EUR"
+          currency_code: "EUR",
+          participants_user_ids: [george.id],
+          paid_by_user_id: george.id
         }
       })
 
@@ -134,6 +136,8 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
           created_by_user_id: george.id,
           date: "2023-10-02",
           currency_code: "EUR",
+          participants_user_ids: [george.id],
+          paid_by_user_id: george.id,
           expense_items: %{
             "0" => %{
               id: item.id,

@@ -18,7 +18,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
     assert render(view) =~ "Amount"
     assert render(view) =~ "Date"
     assert render(view) =~ "Currency"
-    assert render(view) =~ "Created By"
+
     assert render(view) =~ "Recently used"
     assert render(view) =~ "All currencies"
     assert render(view) =~ "USD - United States Dollar"
@@ -50,6 +50,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
   end
 
   test "creates a new expense", %{conn: conn, george: george} do
+    meks = Users.get_user!(2)
     {:ok, view, _html} = live(conn, ~p"/users/#{george}/expenses/new")
 
     view
@@ -60,7 +61,9 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
         description: "Test Expense",
         created_by_user_id: george.id,
         date: "2023-10-01",
-        currency_code: "USD"
+        currency_code: "USD",
+        participants_user_ids: [george.id, meks.id],
+        paid_by_user_id: george.id
       }
     })
 
@@ -74,7 +77,7 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
     |> element("form")
     |> render_submit(%{
       expense: %{
-        amount_cents: "",
+        amount_dollars: "",
         description: "",
         created_by_user_id: "",
         date: "",
@@ -98,6 +101,8 @@ defmodule QuentaWeb.ExpensesLive.NewTest do
         created_by_user_id: george.id,
         date: "2023-10-01",
         currency_code: "USD",
+        participants_user_ids: [george.id, meks.id],
+        paid_by_user_id: george.id,
         expense_items: %{
           "0" => %{
             description: "Item 1",

@@ -5,13 +5,22 @@ defmodule Quenta.ExpensesTest do
 
   describe "change_expense/2" do
     test "returns a changeset for an existing expense" do
-      expense = %Quenta.Expenses.Expense{
-        id: 1,
-        description: "Test Expense",
-        amount_dollars: 10.00,
-        date: ~D[2023-10-01],
-        created_by_user_id: 1
-      }
+      user = insert(:user)
+      other_user = insert(:user)
+
+      expense =
+        insert(:expense,
+          description: "Test Expense",
+          amount_cents: 1000,
+          date: ~D[2023-10-01],
+          created_by_user: user
+        )
+
+      insert(:expense_participant, expense: expense, user: user, share_cents: 500)
+      insert(:expense_participant, expense: expense, user: other_user, share_cents: 500)
+      insert(:expense_payment, expense: expense, user: user, amount_cents: 1000)
+
+      expense = Expenses.get_expense_for_edit!(expense.id)
 
       changeset = Expenses.change_expense(expense, %{"description" => "Updated Expense"})
       assert changeset.valid?
@@ -19,13 +28,22 @@ defmodule Quenta.ExpensesTest do
     end
 
     test "returns an invalid changeset when missing required fields" do
-      expense = %Quenta.Expenses.Expense{
-        id: 1,
-        description: "Test Expense",
-        amount_dollars: 10.00,
-        date: ~D[2023-10-01],
-        created_by_user_id: 1
-      }
+      user = insert(:user)
+      other_user = insert(:user)
+
+      expense =
+        insert(:expense,
+          description: "Test Expense",
+          amount_cents: 1000,
+          date: ~D[2023-10-01],
+          created_by_user: user
+        )
+
+      insert(:expense_participant, expense: expense, user: user, share_cents: 500)
+      insert(:expense_participant, expense: expense, user: other_user, share_cents: 500)
+      insert(:expense_payment, expense: expense, user: user, amount_cents: 1000)
+
+      expense = Expenses.get_expense_for_edit!(expense.id)
 
       changeset = Expenses.change_expense(expense, %{"description" => nil})
       refute changeset.valid?
@@ -36,12 +54,15 @@ defmodule Quenta.ExpensesTest do
   describe "create_expense/1" do
     test "creates a new expense" do
       user = insert(:user)
+      other_user = insert(:user)
 
       params = %{
         "description" => "Lunch",
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
-        "created_by_user_id" => user.id
+        "created_by_user_id" => user.id,
+        "participants_user_ids" => [user.id, other_user.id],
+        "paid_by_user_id" => user.id
       }
 
       assert {:ok, expense} = Expenses.create_expense(params)
@@ -53,12 +74,15 @@ defmodule Quenta.ExpensesTest do
 
     test "defaults currency_code to USD when missing" do
       user = insert(:user)
+      other_user = insert(:user)
 
       params = %{
         "description" => "Lunch",
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
-        "created_by_user_id" => user.id
+        "created_by_user_id" => user.id,
+        "participants_user_ids" => [user.id, other_user.id],
+        "paid_by_user_id" => user.id
       }
 
       assert {:ok, expense} = Expenses.create_expense(params)
@@ -75,6 +99,8 @@ defmodule Quenta.ExpensesTest do
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
         "created_by_user_id" => user_1.id,
+        "participants_user_ids" => [user_1.id, user_2.id],
+        "paid_by_user_id" => user_1.id,
         "expense_items" => [
           %{
             description: "Item 1",
@@ -95,6 +121,64 @@ defmodule Quenta.ExpensesTest do
       assert expense_item.user_id == user_2.id
     end
 
+    test "creates a new expense with participants and payments" do
+      user = insert(:user)
+      other_user = insert(:user)
+
+      params = %{
+        "description" => "Dinner",
+        "amount_dollars" => 10.00,
+        "date" => ~D[2023-10-01],
+        "created_by_user_id" => user.id,
+        "participants_user_ids" => [user.id, other_user.id],
+        "paid_by_user_id" => user.id
+      }
+
+      assert {:ok, expense} = Expenses.create_expense(params)
+      expense = Quenta.Repo.preload(expense, [:expense_participants, :expense_payments])
+
+      assert length(expense.expense_participants) == 2
+      assert length(expense.expense_payments) == 1
+      assert Enum.sum(Enum.map(expense.expense_participants, & &1.share_cents)) == 1000
+      assert Enum.sum(Enum.map(expense.expense_payments, & &1.amount_cents)) == 1000
+    end
+
+    test "returns an error when participants are missing but payments are provided" do
+      user = insert(:user)
+
+      params = %{
+        "description" => "Dinner",
+        "amount_dollars" => 10.00,
+        "date" => ~D[2023-10-01],
+        "created_by_user_id" => user.id,
+        "participants_user_ids" => [],
+        "paid_by_user_id" => user.id
+      }
+
+      assert {:error, changeset} = Expenses.create_expense(params)
+      assert changeset.valid? == false
+      assert changeset.errors[:expense_participants] != nil
+    end
+
+    test "defaults payer to creator when not provided" do
+      user = insert(:user)
+      other_user = insert(:user)
+
+      params = %{
+        "description" => "Dinner",
+        "amount_dollars" => 10.00,
+        "date" => ~D[2023-10-01],
+        "created_by_user_id" => user.id,
+        "participants_user_ids" => [user.id, other_user.id]
+      }
+
+      assert {:ok, expense} = Expenses.create_expense(params)
+      expense = Quenta.Repo.preload(expense, :expense_payments)
+      user_id = user.id
+      assert [%{user_id: ^user_id}] = expense.expense_payments
+      assert Enum.sum(Enum.map(expense.expense_payments, & &1.amount_cents)) == 1000
+    end
+
     test "returns an error when required fields are missing" do
       user = insert(:user)
 
@@ -111,6 +195,46 @@ defmodule Quenta.ExpensesTest do
       assert changeset.errors[:amount_dollars] != nil
     end
 
+    test "returns an error when participant shares do not match total" do
+      user = insert(:user)
+      other_user = insert(:user)
+
+      params = %{
+        "description" => "Dinner",
+        "amount_dollars" => 10.00,
+        "date" => ~D[2023-10-01],
+        "created_by_user_id" => user.id,
+        "participants_user_ids" => [user.id, other_user.id],
+        "paid_by_user_id" => user.id,
+        "expense_items" => [
+          %{"description" => "Overage", "amount_dollars" => 7.00, "user_id" => user.id},
+          %{"description" => "Overage 2", "amount_dollars" => 4.00, "user_id" => other_user.id}
+        ]
+      }
+
+      assert {:error, changeset} = Expenses.create_expense(params)
+      assert changeset.valid? == false
+      assert changeset.errors[:expense_participants] != nil
+    end
+
+    test "creates a payment that matches the total amount" do
+      user = insert(:user)
+      other_user = insert(:user)
+
+      params = %{
+        "description" => "Dinner",
+        "amount_dollars" => 10.00,
+        "date" => ~D[2023-10-01],
+        "created_by_user_id" => user.id,
+        "participants_user_ids" => [user.id, other_user.id],
+        "paid_by_user_id" => user.id
+      }
+
+      assert {:ok, expense} = Expenses.create_expense(params)
+      expense = Quenta.Repo.preload(expense, :expense_payments)
+      assert Enum.sum(Enum.map(expense.expense_payments, & &1.amount_cents)) == 1000
+    end
+
     test "broadcasts expense_added upon success" do
       user_1 = insert(:user)
       user_2 = insert(:user)
@@ -120,6 +244,8 @@ defmodule Quenta.ExpensesTest do
         "amount_dollars" => 15.00,
         "date" => ~D[2023-10-01],
         "created_by_user_id" => user_1.id,
+        "participants_user_ids" => [user_1.id, user_2.id],
+        "paid_by_user_id" => user_1.id,
         "expense_items" => [
           %{
             description: "Item 1",
@@ -293,11 +419,16 @@ defmodule Quenta.ExpensesTest do
           currency_code: "NZD"
         )
 
+      insert(:expense_participant, expense: expense, user: user, share_cents: 1000)
+      insert(:expense_payment, expense: expense, user: user, amount_cents: 1000)
+
       params = %{
         "description" => "Old",
         "amount_dollars" => 10.00,
         "date" => ~D[2023-10-01],
         "created_by_user_id" => user.id,
+        "participants_user_ids" => [user.id],
+        "paid_by_user_id" => user.id,
         "currency_code" => nil
       }
 
@@ -317,6 +448,9 @@ defmodule Quenta.ExpensesTest do
           date: ~D[2023-10-01]
         )
 
+      insert(:expense_participant, expense: expense, user: user, share_cents: 1000)
+      insert(:expense_payment, expense: expense, user: user, amount_cents: 1000)
+
       item =
         insert(:expense_item,
           expense: expense,
@@ -330,6 +464,8 @@ defmodule Quenta.ExpensesTest do
         "amount_dollars" => 20.00,
         "date" => ~D[2023-10-02],
         "created_by_user_id" => user.id,
+        "participants_user_ids" => [user.id],
+        "paid_by_user_id" => user.id,
         "expense_items" => [
           %{
             "id" => item.id,
@@ -375,6 +511,9 @@ defmodule Quenta.ExpensesTest do
           date: ~D[2023-10-01]
         )
 
+      insert(:expense_participant, expense: expense, user: user, share_cents: 1000)
+      insert(:expense_payment, expense: expense, user: user, amount_cents: 1000)
+
       item_1 =
         insert(:expense_item,
           expense: expense,
@@ -396,6 +535,8 @@ defmodule Quenta.ExpensesTest do
         "amount_dollars" => 10.00,
         "date" => ~D[2023-10-02],
         "created_by_user_id" => user.id,
+        "participants_user_ids" => [user.id],
+        "paid_by_user_id" => user.id,
         "expense_items_sort" => ["0", "1"],
         "expense_items_drop" => ["1"],
         "expense_items" => %{
@@ -433,11 +574,16 @@ defmodule Quenta.ExpensesTest do
           date: ~D[2023-10-01]
         )
 
+      insert(:expense_participant, expense: expense, user: user, share_cents: 1000)
+      insert(:expense_payment, expense: expense, user: user, amount_cents: 1000)
+
       params = %{
         "description" => "New",
         "amount_dollars" => 12.50,
         "date" => ~D[2023-10-02],
-        "created_by_user_id" => user.id
+        "created_by_user_id" => user.id,
+        "participants_user_ids" => [user.id],
+        "paid_by_user_id" => user.id
       }
 
       Quenta.PubSub.subscribe_to_expense_updated()
@@ -455,6 +601,9 @@ defmodule Quenta.ExpensesTest do
           amount_cents: 1000,
           date: ~D[2023-10-01]
         )
+
+      insert(:expense_participant, expense: expense, user: user, share_cents: 1000)
+      insert(:expense_payment, expense: expense, user: user, amount_cents: 1000)
 
       params = %{
         "description" => "",

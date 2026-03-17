@@ -26,6 +26,22 @@ defmodule Quenta.Factory do
     }
   end
 
+  def expense_participant_factory do
+    %Quenta.ExpenseParticipants.ExpenseParticipant{
+      share_cents: 500,
+      user: build(:user),
+      expense: build(:expense)
+    }
+  end
+
+  def expense_payment_factory do
+    %Quenta.ExpensePayments.ExpensePayment{
+      amount_cents: 500,
+      user: build(:user),
+      expense: build(:expense)
+    }
+  end
+
   def currency_factory do
     %Quenta.Currencies.Currency{
       code: sequence(:currency_code, &"C#{&1}") |> String.pad_leading(3, "0"),

@@ -11,7 +11,12 @@ defmodule QuentaWeb.ExpensesLive.New do
 
     form =
       %Expense{}
-      |> Expenses.change_expense(%{currency_code: last_used_currency_code})
+      |> Expenses.change_expense(%{
+        currency_code: last_used_currency_code,
+        created_by_user_id: user_id,
+        paid_by_user_id: user_id,
+        participants_user_ids: [user_id]
+      })
       |> to_form()
 
     user_options = Users.list_users() |> Enum.map(fn user -> {user.name, user.id} end)
@@ -29,15 +34,19 @@ defmodule QuentaWeb.ExpensesLive.New do
   end
 
   def handle_event("validate", %{"expense" => expense_attrs}, socket) do
+    %{user_id: user_id} = socket.assigns
+    expense_attrs = apply_defaults(expense_attrs, user_id)
     form = %Expense{} |> Expenses.change_expense(expense_attrs) |> to_form(action: :validate)
+    dbg(form)
     {:noreply, assign(socket, :form, form)}
   end
 
   def handle_event("save", %{"expense" => expense_attrs}, socket) do
+    %{user_id: user_id} = socket.assigns
+    expense_attrs = apply_defaults(expense_attrs, user_id)
+
     case Expenses.create_expense(expense_attrs) do
       {:ok, _} ->
-        %{user_id: user_id} = socket.assigns
-
         {:noreply,
          socket
          |> put_flash(:info, "Expense created successfully!")
@@ -46,6 +55,13 @@ defmodule QuentaWeb.ExpensesLive.New do
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
     end
+  end
+
+  defp apply_defaults(expense_attrs, user_id) do
+    expense_attrs
+    |> Map.put_new("created_by_user_id", user_id)
+    |> Map.put_new("paid_by_user_id", user_id)
+    |> Map.put_new("participants_user_ids", [user_id])
   end
 
   def render(assigns) do
@@ -145,20 +161,73 @@ defmodule QuentaWeb.ExpensesLive.New do
                   />
                 </div>
 
+                <input
+                  type="hidden"
+                  name={@form[:created_by_user_id].name}
+                  value={@form[:created_by_user_id].value || @user_id}
+                />
+              </div>
+            </div>
+          </div>
+          
+    <!-- Participants & Payer Section -->
+          <div class="bg-slate-800 rounded-lg border border-slate-700 shadow-sm">
+            <div class="p-6">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                  <.icon name="hero-user-group" class="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 class="text-lg font-semibold text-white">Participants & Payer</h2>
+                  <p class="text-sm text-slate-400">
+                    Shares are calculated automatically from items, then split evenly.
+                  </p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <div class="block text-sm font-medium text-slate-200 mb-2">
+                    Participants *
+                  </div>
+
+                  <div class="space-y-2">
+                    <%= for {user_name, user_id} <- @user_options do %>
+                      <label class="flex items-center gap-2 text-sm text-slate-200">
+                        <input
+                          type="checkbox"
+                          name="expense[participants_user_ids][]"
+                          value={user_id}
+                          checked={
+                            Enum.member?(@form[:participants_user_ids].value || [@user_id], user_id)
+                          }
+                          class="rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span>{user_name}</span>
+                      </label>
+                    <% end %>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-2">
+                    Item owners are included automatically even if not selected.
+                  </p>
+                </div>
+
                 <div>
                   <label
-                    for={@form[:created_by_user_id].id}
+                    for={@form[:paid_by_user_id].id}
                     class="block text-sm font-medium text-slate-200 mb-2"
                   >
-                    Created By *
+                    Paid By *
                   </label>
                   <.input
-                    id={@form[:created_by_user_id].id}
-                    name={@form[:created_by_user_id].name}
                     type="select"
+                    field={@form[:paid_by_user_id]}
                     options={@user_options}
-                    value={@form[:created_by_user_id].value || @user_id}
+                    value={@form[:paid_by_user_id].value || @user_id}
                   />
+                  <p class="text-xs text-slate-500 mt-2">
+                    Payments are recorded as a single payer for now.
+                  </p>
                 </div>
               </div>
             </div>
