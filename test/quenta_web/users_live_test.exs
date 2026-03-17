@@ -80,7 +80,6 @@ defmodule QuentaWeb.UserLiveTest do
       assert html =~ "Coffee Shop"
       assert html =~ "USD $10.50"
       assert html =~ "Oct 2, 2023"
-      assert html =~ "Created by George"
 
       # Check emoji is displayed (coffee emoji for coffee-related expense)
       assert html =~ "☕"

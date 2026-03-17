@@ -306,9 +306,6 @@ defmodule QuentaWeb.UserLive do
                     <div class="font-semibold text-white">
                       {format_amount_with_currency(expense, expense.amount_cents)}
                     </div>
-                    <div class="text-sm text-slate-300 capitalize">
-                      Created by {expense.created_by_user.name}
-                    </div>
                     <div class="text-sm mt-1">
                       <% {label, amount, color_class} = format_expense_balance(expense) %>
                       <span class={color_class}>
