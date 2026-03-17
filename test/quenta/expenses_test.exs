@@ -51,6 +51,43 @@ defmodule Quenta.ExpensesTest do
     end
   end
 
+  describe "list_user_settlements_by_currency/3" do
+    test "returns only settlements involving the user" do
+      meks = insert(:user, name: "Meks")
+      sam = insert(:user, name: "Sam")
+      george = insert(:user, name: "George")
+
+      expense =
+        insert(:expense,
+          amount_cents: 1000,
+          currency_code: "AUD",
+          created_by_user: meks
+        )
+
+      insert(:expense_item, expense: expense, user: sam, amount_cents: 600)
+      insert(:expense_item, expense: expense, user: meks, amount_cents: 400)
+
+      expense = Quenta.Repo.preload(expense, [:expense_items, :created_by_user])
+
+      assert Expenses.list_user_settlements_by_currency([expense], [meks, sam, george], george.id) ==
+               []
+
+      assert [{"AUD", [sam_settlement]}] =
+               Expenses.list_user_settlements_by_currency([expense], [meks, sam, george], sam.id)
+
+      assert sam_settlement.direction == :you_owe
+      assert sam_settlement.other_user.id == meks.id
+      assert sam_settlement.amount_cents == 600
+
+      assert [{"AUD", [meks_settlement]}] =
+               Expenses.list_user_settlements_by_currency([expense], [meks, sam, george], meks.id)
+
+      assert meks_settlement.direction == :owed_to_you
+      assert meks_settlement.other_user.id == sam.id
+      assert meks_settlement.amount_cents == 600
+    end
+  end
+
   describe "create_expense/1" do
     test "creates a new expense" do
       user = insert(:user)

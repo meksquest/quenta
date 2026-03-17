@@ -19,7 +19,6 @@ defmodule QuentaWeb.UserLive do
 
     # Get all users for calculations
     all_users = Users.list_users()
-    other_user = Enum.find(all_users, fn u -> u.id != user.id end)
 
     # Calculate balances for each expense
     expenses_with_balances = calculate_expenses_with_balances(expenses, all_users, user.id)
@@ -27,12 +26,11 @@ defmodule QuentaWeb.UserLive do
     socket =
       socket
       |> assign(:user, user)
-      |> assign(:other_user, other_user)
       |> assign(:all_users, all_users)
       |> assign(:expenses, expenses_with_balances)
       |> assign(
-        :running_totals_by_currency,
-        calculate_running_totals_by_currency(expenses_with_balances)
+        :user_settlements_by_currency,
+        Expenses.list_user_settlements_by_currency(expenses, all_users, user.id)
       )
 
     {:ok, socket}
@@ -61,8 +59,8 @@ defmodule QuentaWeb.UserLive do
          socket
          |> assign(:expenses, expenses_with_balances)
          |> assign(
-           :running_totals_by_currency,
-           calculate_running_totals_by_currency(expenses_with_balances)
+           :user_settlements_by_currency,
+           Expenses.list_user_settlements_by_currency(sorted_expenses, all_users, user.id)
          )
          |> put_flash(:info, "Expense deleted successfully.")}
 
@@ -85,8 +83,8 @@ defmodule QuentaWeb.UserLive do
       socket
       |> assign(:expenses, expenses_with_balances)
       |> assign(
-        :running_totals_by_currency,
-        calculate_running_totals_by_currency(expenses_with_balances)
+        :user_settlements_by_currency,
+        Expenses.list_user_settlements_by_currency(sorted_expenses, all_users, user.id)
       )
 
     {:noreply, socket}
@@ -110,8 +108,8 @@ defmodule QuentaWeb.UserLive do
       socket
       |> assign(:expenses, expenses_with_balances)
       |> assign(
-        :running_totals_by_currency,
-        calculate_running_totals_by_currency(expenses_with_balances)
+        :user_settlements_by_currency,
+        Expenses.list_user_settlements_by_currency(sorted_expenses, all_users, user.id)
       )
 
     {:noreply, socket}
@@ -129,8 +127,8 @@ defmodule QuentaWeb.UserLive do
       socket
       |> assign(:expenses, expenses_with_balances)
       |> assign(
-        :running_totals_by_currency,
-        calculate_running_totals_by_currency(expenses_with_balances)
+        :user_settlements_by_currency,
+        Expenses.list_user_settlements_by_currency(sorted_expenses, all_users, user.id)
       )
 
     {:noreply, socket}
@@ -165,28 +163,20 @@ defmodule QuentaWeb.UserLive do
     end)
   end
 
-  defp calculate_running_totals_by_currency(expenses_with_balances) do
-    expenses_with_balances
-    |> Enum.reduce(%{}, fn expense, totals ->
-      currency_code = expense.currency_code || "USD"
-      Map.update(totals, currency_code, expense.user_balance, &(&1 + expense.user_balance))
-    end)
-    |> Enum.sort_by(fn {currency_code, _} -> currency_code end)
+  defp format_user_settlement_line(
+         currency_code,
+         %{direction: :you_owe, other_user: other_user, amount_cents: amount_cents}
+       ) do
+    formatted_amount = "#{currency_code} #{format_cents_to_dollars(amount_cents)}"
+    {"You owe #{other_user.name} #{formatted_amount}", "text-red-400"}
   end
 
-  defp format_current_balance_line(currency_code, amount_cents, _user_name, other_user_name) do
-    formatted_amount = "#{currency_code} #{format_cents_to_dollars(abs(amount_cents))}"
-
-    cond do
-      amount_cents > 0 ->
-        {"You owe #{other_user_name} #{formatted_amount}", "text-red-400"}
-
-      amount_cents < 0 ->
-        {"#{other_user_name} owes you #{formatted_amount}", "text-green-400"}
-
-      true ->
-        {"Even #{formatted_amount}", "text-slate-400"}
-    end
+  defp format_user_settlement_line(
+         currency_code,
+         %{direction: :owed_to_you, other_user: other_user, amount_cents: amount_cents}
+       ) do
+    formatted_amount = "#{currency_code} #{format_cents_to_dollars(amount_cents)}"
+    {"#{other_user.name} owes you #{formatted_amount}", "text-green-400"}
   end
 
   defp format_date(date) do
@@ -259,18 +249,14 @@ defmodule QuentaWeb.UserLive do
             <div class="text-center">
               <h2 class="text-lg font-medium text-slate-200 mb-2">Current Balances</h2>
               <div class="space-y-2 text-lg sm:text-2xl font-bold">
-                <%= if @running_totals_by_currency == [] do %>
+                <%= if @user_settlements_by_currency == [] do %>
                   <span class="text-slate-400">No balances yet</span>
                 <% else %>
-                  <%= for {currency_code, amount_cents} <- @running_totals_by_currency do %>
-                    <% {line, color_class} =
-                      format_current_balance_line(
-                        currency_code,
-                        amount_cents,
-                        @user.name,
-                        @other_user.name
-                      ) %>
-                    <div class={color_class}>{line}</div>
+                  <%= for {currency_code, settlements} <- @user_settlements_by_currency do %>
+                    <%= for settlement <- settlements do %>
+                      <% {line, color_class} = format_user_settlement_line(currency_code, settlement) %>
+                      <div class={color_class}>{line}</div>
+                    <% end %>
                   <% end %>
                 <% end %>
               </div>
