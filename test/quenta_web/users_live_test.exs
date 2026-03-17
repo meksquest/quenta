@@ -110,6 +110,30 @@ defmodule QuentaWeb.UserLiveTest do
       assert html =~ "You owe USD $10.00"
     end
 
+    test "recent expenses balances use expense participants", %{
+      conn: conn,
+      george: george,
+      meks: meks
+    } do
+      _sam = insert(:user, name: "Sam")
+
+      expense =
+        insert(:expense,
+          description: "Shared Dinner",
+          amount_cents: 2000,
+          date: ~D[2023-10-02],
+          created_by_user: george
+        )
+
+      insert(:expense_participant, expense: expense, user: meks, share_cents: 1000)
+      insert(:expense_participant, expense: expense, user: george, share_cents: 1000)
+
+      {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
+
+      assert html =~ "You owe USD $10.00"
+      refute html =~ "USD $6.67"
+    end
+
     test "displays correct balance when user is owed money", %{conn: conn, meks: meks} do
       # Meks pays $30, so George owes Meks $15
       insert(:expense,

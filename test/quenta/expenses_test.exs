@@ -86,6 +86,89 @@ defmodule Quenta.ExpensesTest do
       assert meks_settlement.other_user.id == sam.id
       assert meks_settlement.amount_cents == 600
     end
+
+    test "uses expense participants when calculating settlements" do
+      meks = insert(:user, name: "Meks")
+      george = insert(:user, name: "George")
+      sam = insert(:user, name: "Sam")
+
+      expense =
+        insert(:expense,
+          amount_cents: 2000,
+          currency_code: "USD",
+          created_by_user: george
+        )
+
+      insert(:expense_participant, expense: expense, user: meks, share_cents: 1000)
+      insert(:expense_participant, expense: expense, user: george, share_cents: 1000)
+
+      expense = Quenta.Repo.preload(expense, [:expense_items, :expense_participants])
+
+      assert [{"USD", [settlement]}] =
+               Expenses.list_user_settlements_by_currency(
+                 [expense],
+                 [meks, george, sam],
+                 meks.id
+               )
+
+      assert settlement.direction == :you_owe
+      assert settlement.other_user.id == george.id
+      assert settlement.amount_cents == 1000
+    end
+  end
+
+  describe "participants_for_expense/2" do
+    test "returns only expense participants when present" do
+      meks = insert(:user, name: "Meks")
+      george = insert(:user, name: "George")
+      sam = insert(:user, name: "Sam")
+
+      expense =
+        insert(:expense,
+          amount_cents: 2000,
+          currency_code: "USD",
+          created_by_user: george
+        )
+
+      insert(:expense_participant, expense: expense, user: meks, share_cents: 1000)
+      insert(:expense_participant, expense: expense, user: george, share_cents: 1000)
+
+      expense = Quenta.Repo.preload(expense, [:expense_participants])
+
+      participants = Expenses.participants_for_expense(expense, [meks, george, sam])
+
+      participant_ids = participants |> Enum.map(& &1.id) |> Enum.sort()
+      assert participant_ids == Enum.sort([meks.id, george.id])
+    end
+  end
+
+  describe "balances_for_expense/2" do
+    test "calculates balances using only expense participants" do
+      meks = insert(:user, name: "Meks")
+      george = insert(:user, name: "George")
+      sam = insert(:user, name: "Sam")
+
+      expense =
+        insert(:expense,
+          amount_cents: 2000,
+          currency_code: "USD",
+          created_by_user: george
+        )
+
+      insert(:expense_participant, expense: expense, user: meks, share_cents: 1000)
+      insert(:expense_participant, expense: expense, user: george, share_cents: 1000)
+
+      expense = Quenta.Repo.preload(expense, [:expense_items, :expense_participants])
+
+      balances = Expenses.balances_for_expense(expense, [meks, george, sam])
+
+      assert length(balances) == 2
+      meks_balance = Enum.find(balances, &(&1.user.id == meks.id))
+      george_balance = Enum.find(balances, &(&1.user.id == george.id))
+
+      assert meks_balance.balance == 1000
+      assert george_balance.balance == -1000
+    end
   end
 
   describe "create_expense/1" do

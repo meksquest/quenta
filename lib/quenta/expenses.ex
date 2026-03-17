@@ -88,6 +88,28 @@ defmodule Quenta.Expenses do
     |> Decimal.round(2)
   end
 
+  def participants_for_expense(expense, users) do
+    case expense.expense_participants do
+      %Ecto.Association.NotLoaded{} ->
+        users
+
+      [] ->
+        users
+
+      participants ->
+        users_by_id = Map.new(users, &{&1.id, &1})
+
+        participants
+        |> Enum.map(&Map.get(users_by_id, &1.user_id))
+        |> Enum.reject(&is_nil/1)
+    end
+  end
+
+  def balances_for_expense(expense, users) do
+    participants = participants_for_expense(expense, users)
+    ExpenseCalculator.calculate_balances(expense, expense.expense_items, participants)
+  end
+
   @doc """
   Returns user-focused settlements per currency for a list of expenses.
 
@@ -99,7 +121,8 @@ defmodule Quenta.Expenses do
     expenses
     |> Enum.reduce(%{}, fn expense, totals ->
       currency_code = expense.currency_code || "USD"
-      balances = ExpenseCalculator.calculate_balances(expense, expense.expense_items, users)
+
+      balances = balances_for_expense(expense, users)
 
       Enum.reduce(balances, totals, fn %{user: user, balance: balance}, acc ->
         Map.update(

@@ -3,7 +3,6 @@ defmodule QuentaWeb.UserLive do
 
   import Quenta.Currency
 
-  alias Quenta.ExpenseCalculator
   alias Quenta.Expenses
   alias Quenta.PubSub
   alias Quenta.Users
@@ -15,7 +14,10 @@ defmodule QuentaWeb.UserLive do
     PubSub.subscribe_to_expense_deleted()
     user = Users.get_user!(user_id)
     # Preload both created_by_user and expense_items with their associated users
-    expenses = Expenses.list_expenses(preloads: [:created_by_user, expense_items: [:user]])
+    expenses =
+      Expenses.list_expenses(
+        preloads: [:created_by_user, expense_items: [:user], expense_participants: [:user]]
+      )
 
     # Get all users for calculations
     all_users = Users.list_users()
@@ -72,7 +74,14 @@ defmodule QuentaWeb.UserLive do
   @impl Phoenix.LiveView
   def handle_info({:expense_added, %Quenta.Expenses.Expense{} = expense}, socket) do
     %{expenses: expenses, all_users: all_users, user: user} = socket.assigns
-    preloaded_expense = Quenta.Repo.preload(expense, [:created_by_user, expense_items: [:user]])
+
+    preloaded_expense =
+      Quenta.Repo.preload(expense, [
+        :created_by_user,
+        expense_items: [:user],
+        expense_participants: [:user]
+      ])
+
     updated_expenses = [preloaded_expense | expenses]
     sorted_expenses = sort_expenses_by_date(updated_expenses)
 
@@ -92,7 +101,13 @@ defmodule QuentaWeb.UserLive do
 
   def handle_info({:expense_updated, %Quenta.Expenses.Expense{} = expense}, socket) do
     %{expenses: expenses, all_users: all_users, user: user} = socket.assigns
-    preloaded_expense = Quenta.Repo.preload(expense, [:created_by_user, expense_items: [:user]])
+
+    preloaded_expense =
+      Quenta.Repo.preload(expense, [
+        :created_by_user,
+        expense_items: [:user],
+        expense_participants: [:user]
+      ])
 
     updated_expenses =
       Enum.map(expenses, fn existing ->
@@ -153,10 +168,11 @@ defmodule QuentaWeb.UserLive do
   defp calculate_expenses_with_balances(expenses, all_users, current_user_id) do
     Enum.map(expenses, fn expense ->
       # Calculate balances for this expense
-      balances = ExpenseCalculator.calculate_balances(expense, expense.expense_items, all_users)
+      balances = Expenses.balances_for_expense(expense, all_users)
 
       # Find current user's balance for this expense
-      current_user_balance = Enum.find(balances, &(&1.user.id == current_user_id))
+      current_user_balance =
+        Enum.find(balances, &(&1.user.id == current_user_id)) || %{balance: 0}
 
       # Add balance info to expense
       Map.put(expense, :user_balance, current_user_balance.balance)
