@@ -322,7 +322,7 @@ defmodule QuentaWeb.UserLive do
                       <div class="text-xs text-slate-400 flex justify-between">
                         <span>{item.description} ({item.user.name})</span>
                         <span>
-                          {format_amount_with_currency(expense, item.amount_cents)}
+                          {format_cents_to_dollars(item.amount_cents)}
                         </span>
                       </div>
                     <% end %>
