@@ -1,5 +1,5 @@
 defmodule Quenta.ExpenseCalculatorTest do
-  use ExUnit.Case
+  use Quenta.DataCase, async: true
   alias Quenta.ExpenseCalculator
 
   describe "calculate_balances/3" do
@@ -192,6 +192,125 @@ defmodule Quenta.ExpenseCalculatorTest do
       assert length(result) == 1
       # Single user always balances to 0
       assert hd(result).balance == 0
+    end
+  end
+
+  describe "even_split_summary" do
+    test "all shared expense (no items)" do
+      user_1 = insert(:user)
+      user_2 = insert(:user)
+
+      expense =
+        insert(:expense,
+          amount_cents: 2000,
+          date: ~D[2023-10-02],
+          created_by_user: user_1
+        )
+
+      assert %{
+               shared_total_cents: 2000,
+               per_person_cents: 1000,
+               remainder_cents: 0,
+               participants_count: 2
+             } = ExpenseCalculator.even_split_summary(expense, [user_1, user_2])
+    end
+
+    test "mixed personal items and shared expense" do
+      user_1 = insert(:user)
+      user_2 = insert(:user)
+
+      expense =
+        insert(:expense,
+          amount_cents: 2000,
+          date: ~D[2023-10-02],
+          created_by_user: user_1
+        )
+
+      insert(:expense_item, amount_cents: 600, user: user_1, expense: expense)
+
+      assert %{
+               shared_total_cents: 1400,
+               per_person_cents: 700,
+               remainder_cents: 0,
+               participants_count: 2
+             } = ExpenseCalculator.even_split_summary(expense, [user_1, user_2])
+    end
+
+    test "all personal items (no shared expense)" do
+      user_1 = insert(:user)
+      user_2 = insert(:user)
+
+      expense =
+        insert(:expense,
+          amount_cents: 2000,
+          date: ~D[2023-10-02],
+          created_by_user: user_1
+        )
+
+      insert(:expense_item, amount_cents: 600, user: user_1, expense: expense)
+      insert(:expense_item, amount_cents: 1400, user: user_2, expense: expense)
+
+      assert %{
+               shared_total_cents: 0,
+               per_person_cents: 0,
+               remainder_cents: 0,
+               participants_count: 2
+             } = ExpenseCalculator.even_split_summary(expense, [user_1, user_2])
+    end
+
+    test "remainder handling" do
+      user_1 = insert(:user)
+      user_2 = insert(:user)
+
+      expense =
+        insert(:expense,
+          amount_cents: 1001,
+          date: ~D[2023-10-02],
+          created_by_user: user_1
+        )
+
+      assert %{
+               shared_total_cents: 1001,
+               per_person_cents: 500,
+               remainder_cents: 1,
+               participants_count: 2
+             } = ExpenseCalculator.even_split_summary(expense, [user_1, user_2])
+    end
+
+    test "single participant" do
+      user_1 = insert(:user)
+
+      expense =
+        insert(:expense,
+          amount_cents: 1000,
+          date: ~D[2023-10-02],
+          created_by_user: user_1
+        )
+
+      assert %{
+               shared_total_cents: 1000,
+               per_person_cents: 1000,
+               remainder_cents: 0,
+               participants_count: 1
+             } = ExpenseCalculator.even_split_summary(expense, [user_1])
+    end
+
+    test "zero participants" do
+      user_1 = insert(:user)
+
+      expense =
+        insert(:expense,
+          amount_cents: 1000,
+          date: ~D[2023-10-02],
+          created_by_user: user_1
+        )
+
+      assert %{
+               shared_total_cents: 0,
+               per_person_cents: 0,
+               remainder_cents: 0,
+               participants_count: 0
+             } = ExpenseCalculator.even_split_summary(expense, [])
     end
   end
 end
