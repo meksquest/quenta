@@ -4,8 +4,7 @@
     <div class="max-w-4xl mx-auto px-4 py-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-white">Add Expense</h1>
-          <p class="text-slate-300 mt-1">Add the expense and any individual items</p>
+          <h1 class="text-2xl font-bold text-white">{action_label(@action)}</h1>
         </div>
         <.link
           navigate={~p"/users/#{@user_id}"}
@@ -213,7 +212,7 @@
             </.inputs_for>
             
 <!-- Empty State -->
-            <%= if Enum.empty?(@form.source.changes.expense_items) do %>
+            <%= if Enum.empty?(@form[:expense_items].value || []) do %>
               <div class="text-center py-8 border-2 border-dashed border-slate-600 rounded-lg">
                 <.icon name="hero-list-bullet" class="w-12 h-12 text-slate-500 mx-auto mb-3" />
                 <p class="text-slate-400 text-sm">No expense items added yet</p>
@@ -246,7 +245,7 @@
           ]}
         >
           <.icon name="hero-check" class="w-4 h-4" />
-          {if @form.source.valid?, do: "Add Expense", else: "Fill in required fields"}
+          {if @form.source.valid?, do: action_label(@action), else: "Fill in required fields"}
         </button>
       </div>
     </.form>

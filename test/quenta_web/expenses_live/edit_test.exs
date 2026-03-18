@@ -22,7 +22,7 @@ defmodule QuentaWeb.ExpensesLive.EditTest do
 
     html = render(view)
 
-    assert html =~ "Edit Expense"
+    assert html =~ "Update Expense"
     assert html =~ "Description"
     assert html =~ "Amount"
     assert html =~ "Date"

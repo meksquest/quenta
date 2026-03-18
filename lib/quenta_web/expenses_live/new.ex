@@ -11,7 +11,7 @@ defmodule QuentaWeb.ExpensesLive.New do
 
     form =
       %Expense{}
-      |> Expenses.change_expense(%{currency_code: last_used_currency_code})
+      |> Expenses.change_expense(%{currency_code: last_used_currency_code, expense_items: []})
       |> to_form()
 
     user_options = Users.list_users() |> Enum.map(fn user -> {user.name, user.id} end)
@@ -30,7 +30,15 @@ defmodule QuentaWeb.ExpensesLive.New do
 
   def render(assigns) do
     ~H"""
-    <.live_component module={QuentaWeb.ExpensesLive.FormComponent} id={:new} user_id={@user_id} />
+    <.live_component
+      module={QuentaWeb.ExpensesLive.FormComponent}
+      id={:new_expense_form}
+      action={:new}
+      user_id={@user_id}
+      form={@form}
+      user_options={@user_options}
+      currency_options={@currency_options}
+    />
     """
   end
 end
