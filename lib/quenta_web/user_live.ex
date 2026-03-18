@@ -160,8 +160,12 @@ defmodule QuentaWeb.UserLive do
       # Find current user's balance for this expense
       current_user_balance = Enum.find(balances, &(&1.user.id == current_user_id))
 
+      even_split_summary = ExpenseCalculator.even_split_summary(expense, all_users)
+
       # Add balance info to expense
-      Map.put(expense, :user_balance, current_user_balance.balance)
+      expense
+      |> Map.put(:user_balance, current_user_balance.balance)
+      |> Map.put(:even_split_summary, even_split_summary)
     end)
   end
 
@@ -316,6 +320,17 @@ defmodule QuentaWeb.UserLive do
                 </div>
                 
     <!-- Show expense items if any -->
+                <%= if length(expense.expense_items) > 0 and
+                      expense.even_split_summary.shared_total_cents > 0 do %>
+                  <div class="mt-2 text-xs text-slate-400 flex justify-end">
+                    <span class="text-right">
+                      Even split: {format_cents_to_dollars(
+                        expense.even_split_summary.shared_total_cents
+                      )} ({format_cents_to_dollars(expense.even_split_summary.per_person_cents)} each)
+                    </span>
+                  </div>
+                <% end %>
+
                 <%= if length(expense.expense_items) > 0 do %>
                   <div class="mt-3 space-y-1 pl-10">
                     <%= for item <- expense.expense_items do %>

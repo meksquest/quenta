@@ -211,6 +211,80 @@ defmodule QuentaWeb.UserLiveTest do
       assert html =~ "USD $25.00"
     end
 
+    test "displays even split summary when shared portion exists", %{
+      conn: conn,
+      george: george,
+      meks: meks
+    } do
+      expense =
+        insert(:expense,
+          description: "Shared Dinner",
+          amount_cents: 2000,
+          date: ~D[2023-10-02],
+          created_by_user: george
+        )
+
+      insert(:expense_item,
+        description: "George Item",
+        amount_cents: 600,
+        user: george,
+        expense: expense
+      )
+
+      {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
+
+      assert html =~ "Even split: $14.00 ($7.00 each)"
+    end
+
+    test "does not display even split summary when there are no items", %{
+      conn: conn,
+      george: george,
+      meks: meks
+    } do
+      insert(:expense,
+        description: "Shared by Default",
+        amount_cents: 2000,
+        date: ~D[2023-10-02],
+        created_by_user: george
+      )
+
+      {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
+
+      refute html =~ "Even split:"
+    end
+
+    test "does not display even split summary when shared portion is zero", %{
+      conn: conn,
+      george: george,
+      meks: meks
+    } do
+      expense =
+        insert(:expense,
+          description: "All Personal",
+          amount_cents: 2000,
+          date: ~D[2023-10-02],
+          created_by_user: george
+        )
+
+      insert(:expense_item,
+        description: "George Item",
+        amount_cents: 1000,
+        user: george,
+        expense: expense
+      )
+
+      insert(:expense_item,
+        description: "Meks Item",
+        amount_cents: 1000,
+        user: meks,
+        expense: expense
+      )
+
+      {:ok, _view, html} = live(conn, ~p"/users/#{meks.id}")
+
+      refute html =~ "Even split:"
+    end
+
     test "displays correct emoji for different expense types", %{
       conn: conn,
       george: george,
